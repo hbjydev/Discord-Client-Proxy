@@ -32,36 +32,41 @@ public class AssetProxyController : ControllerBase
         if (!resp.IsSuccessStatusCode) return NotFound();
         var bytes = await resp.Content.ReadAsByteArrayAsync();
 
-        if(res.EndsWith(".js") || res.EndsWith(".css"))
+        if (res.EndsWith(".js") || res.EndsWith(".css"))
         {
-            //remove sourcemap
-            var str = Encoding.UTF8.GetString(bytes);
-            str = PatchClient(str);
-            bytes = Encoding.UTF8.GetBytes(str);
+            bytes = Encoding.UTF8.GetBytes(
+                PatchClient(
+                    Encoding.UTF8.GetString(bytes)
+                )
+            );
         }
 
         if (Configuration.Instance.Cache.Disk)
         {
-            System.IO.Directory.CreateDirectory(Configuration.Instance.AssetCacheLocationResolved);
-            await System.IO.File.WriteAllBytesAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{res}", bytes);
+            Directory.CreateDirectory(Configuration.Instance.AssetCacheLocationResolved);
+            await System.IO.File.WriteAllBytesAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{res}",
+                bytes);
         }
+
         AssetCache.Instance.asset_cache.TryAdd(res, bytes);
 
         return File(bytes, HttpUtilities.GetContentTypeByFilename(res));
         //return NotFound();
     }
-    
-    
+
+
     public static string PatchClient(string str)
     {
         TestClientPatchOptions patchOptions = Configuration.Instance.Client.DebugOptions.Patches;
         str = str.Replace("//# sourceMappingURL=", "//# disabledSourceMappingURL=");
-        str = str.Replace("https://fa97a90475514c03a42f80cd36d147c4@sentry.io/140984", "https://6bad92b0175d41a18a037a73d0cff282@sentry.thearcanebrony.net/12");
+        str = str.Replace("https://fa97a90475514c03a42f80cd36d147c4@sentry.io/140984",
+            "https://6bad92b0175d41a18a037a73d0cff282@sentry.thearcanebrony.net/12");
         if (patchOptions.GatewayPlaintext)
         {
-            str = str.Replace("e.isDiscordGatewayPlaintextSet=function(){0;return!1};", "e.isDiscordGatewayPlaintextSet = function() { return true };");
+            str = str.Replace("e.isDiscordGatewayPlaintextSet=function(){0;return!1};",
+                "e.isDiscordGatewayPlaintextSet = function() { return true };");
         }
-        
+
         if (patchOptions.NoXssWarning)
         {
             str = str.Replace("console.log(\"%c\"+n.SELF_XSS_", "console.valueOf(n.SELF_XSS_");
