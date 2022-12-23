@@ -21,18 +21,30 @@ public class AssetProxyController : ControllerBase
         //we dont have map files, so dont even bother
         if (res.EndsWith(".map")) return NotFound();
 
-        if (AssetCache.Instance.asset_cache.ContainsKey("res"))
-        {
-            byte[] result = AssetCache.Instance.asset_cache[res];
-            return File(result, HttpUtilities.GetContentTypeByFilename(res));
-        }
+        byte[]? data = null;
+        data ??= await GetFromCache(res);
+        data ??= await GetFromDisk(res);
+        data ??= await GetFromNetwork(res);
+        
+        if (data is null) return NotFound();
+        return File(data, HttpUtilities.GetContentTypeByFilename(res));
+    }
 
+    private static async Task<byte[]?> GetFromDisk(string asset)
+    {
+        if(System.IO.File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{asset}"))
+            return await System.IO.File.ReadAllBytesAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{asset}");
+        return null;
+    }
+    private static async Task<byte[]?> GetFromNetwork(string asset)
+    {
+        Console.WriteLine($"[Asset cache] Downloading {"https://discord.com/assets/" + asset}");
         using var hc = new HttpClient();
-        var resp = await hc.GetAsync("https://discord.com/assets/" + res);
-        if (!resp.IsSuccessStatusCode) return NotFound();
+        var resp = await hc.GetAsync("https://discord.com/assets/" + asset);
+        if (!resp.IsSuccessStatusCode) return null;
         var bytes = await resp.Content.ReadAsByteArrayAsync();
 
-        if (res.EndsWith(".js") || res.EndsWith(".css"))
+        if (asset.EndsWith(".js") || asset.EndsWith(".css"))
         {
             bytes = Encoding.UTF8.GetBytes(
                 PatchClient(
@@ -43,17 +55,20 @@ public class AssetProxyController : ControllerBase
 
         if (Configuration.Instance.Cache.Disk)
         {
+            Console.WriteLine($"[Asset cache] Saving {"https://discord.com/assets/" + asset} -> {Configuration.Instance.AssetCacheLocationResolved}/{asset}");
             Directory.CreateDirectory(Configuration.Instance.AssetCacheLocationResolved);
-            await System.IO.File.WriteAllBytesAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{res}",
+            await System.IO.File.WriteAllBytesAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{asset}",
                 bytes);
         }
 
-        AssetCache.Instance.asset_cache.TryAdd(res, bytes);
-
-        return File(bytes, HttpUtilities.GetContentTypeByFilename(res));
-        //return NotFound();
+        AssetCache.Instance.asset_cache.TryAdd(asset, bytes);
+        return bytes;
     }
 
+    private static async Task<byte[]?> GetFromCache(string asset)
+    {
+        return AssetCache.Instance.asset_cache.ContainsKey(asset) ? AssetCache.Instance.asset_cache[asset] : null;
+    }
 
     public static string PatchClient(string str)
     {
