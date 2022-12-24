@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text;
 using DiscordClientProxy.Utilities;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
@@ -23,6 +24,7 @@ public class IndexController : ControllerBase
     [HttpGet("/login")]
     [HttpGet("/register")]
     [HttpGet("/channels/@me")]
+    [EnableCors]
     public async Task<object> Home()
     {
         if (AssetCache.Instance.ClientPageHtml is null)

@@ -21,9 +21,19 @@ else if(Configuration.Instance.Cache.Preload && Directory.Exists(Configuration.I
     }
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        {
+            policy.AllowAnyOrigin();
+            policy.AllowAnyHeader();
+            policy.AllowAnyMethod();
+        });
+});
 builder.Services.AddControllers();
 
 var app = builder.Build();
+app.UseCors();
 app.MapControllers();
 
 if(Configuration.Instance.Debug.ClientEnvProxyUrl != null)
