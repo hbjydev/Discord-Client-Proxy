@@ -7,7 +7,7 @@ Build and run:
 ```sh
 git clone https://github.com/Fosscord/Discord-Client-Proxy
 cd Discord-Client-Proxy/DiscordClientProxy
-#pick one of these 2, depending on how you manage your setup, for testing the second is recommended:
+#pick one of these 2, depending on how you manage your setup. Generally, the second is recommended:
 # dotnet run
 # BASE_DIR=~/DiscordClientProxy dotnet run
 ```
