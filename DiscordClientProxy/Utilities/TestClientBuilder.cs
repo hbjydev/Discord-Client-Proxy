@@ -49,15 +49,20 @@ public class TestClientBuilder
         html = html.Replace("<!--client_css-->",
             string.Join("\n", lines.Where(x => x.Contains("link rel=\"stylesheet\""))));
         html = html.Replace("integrity", "hashes");
+        // fast identify
+        html = html.Replace(
+            "e.isFastConnect=t;t?e._doFastConnectIdentify():e._doResumeOrIdentify()",
+            "e.isFastConnect=t; if (t !== undefined) e._doResumeOrIdentify();"
+        );
         //inject debug utilities
         var debugOptions = Configuration.Instance.Client.DebugOptions;
         if (debugOptions.DumpWebsocketTrafficToBrowserConsole)
             html = html.Replace("<!-- preload plugin marker -->",
-                await File.ReadAllTextAsync(Environment.BinDir +"Resources/Injections/WebSocketDataLog.html") +
+                await File.ReadAllTextAsync(Environment.BinDir +"/Resources/Private/Injections/WebSocketDataLog.html") +
                 "\n<!-- preload plugin marker -->");
         if (debugOptions.DumpWebsocketTraffic)
             html = html.Replace("<!-- preload plugin marker -->",
-                await File.ReadAllTextAsync(Environment.BinDir +"Resources/Injections/WebSocketDumper.html") +
+                await File.ReadAllTextAsync(Environment.BinDir +"/Resources/Private/Injections/WebSocketDumper.html") +
                 "\n<!-- preload plugin marker -->");
 
         AssetCache.Instance.ClientPageHtml = html;

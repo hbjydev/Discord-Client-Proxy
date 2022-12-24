@@ -4,9 +4,9 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Discord Test Client</title>
-<!--    <link rel="stylesheet" href="/assets/fosscord.css"/>-->
-<!--    <link id="logincss" rel="stylesheet" href="/assets/fosscord-login.css"/>-->
-<!--    <link id="customcss" rel="stylesheet" href="/assets/user.css"/>-->
+    <!--    <link rel="stylesheet" href="/assets/fosscord.css"/>-->
+    <!--    <link id="logincss" rel="stylesheet" href="/assets/fosscord-login.css"/>-->
+    <!--    <link id="customcss" rel="stylesheet" href="/assets/user.css"/>-->
     <!-- preload plugin marker -->
 </head>
 
@@ -66,6 +66,81 @@
 				localStorage.setItem("UserSettingsStore", JSON.stringify(settings));
 			}
 		
+
+
+</script>
+<script>
+		(() => {
+			if (window.WebSocket == null) return;
+			if (window.__OVERLAY__) return;
+
+			const getStorage = (key) => {
+				try {
+					return JSON.parse(localStorage.getItem(key));
+				}
+				catch (e) {
+					return undefined;
+				}
+			};
+
+			const token = getStorage("token");
+			if (!token) return;
+
+			const encoding = window.DiscordNative != null || window.require != null ? "etf" : "json";
+			const url = window.GLOBAL_ENV.GATEWAY_ENDPOINT +
+				"/?encoding=" +
+				encoding +
+				"&v=" +
+				window.GLOBAL_ENV.API_VERSION +
+				"&compress=zlib-stream";
+
+			console.log("[FAST IDENTIFY] connecting to:", url);
+
+			const socket = new WebSocket(url);
+			socket.binaryType = "arraybuffer";
+			const start = Date.now();
+			const state = { open: false, identity: false, gateway: url, messages: [] };
+
+			socket.onopen = function () {
+				console.log(`[FAST IDENTIFY] connected in ${Date.now() - start}ms`);
+				state.open = true;
+
+				console.log("[FAST IDENTIFY] Sending payload");
+				state.identity = true;
+				const payload = {
+					op: 2,
+					d: {
+						token: token,
+						capabilities: 509,
+						properties: {
+							...(getStorage("deviceProperties") || {}),
+							browser_user_agent: navigator.userAgent,
+						},
+						compress: false,
+						presence: {
+							status: getStorage("UserSettingsStore")?.status || "online",
+							since: 0,
+							activities: [],
+							afk: false,
+						},
+					}
+				};
+				socket.send(JSON.stringify(payload));
+			};
+
+			socket.onclose = socket.onerror = (e) => {
+				console.log("[FAST IDENTIFY] Failed", e);
+				window._ws = null;
+			};
+
+			socket.onmessage = (message) => {
+				state.messages.push(message);
+			};
+
+			window._ws = { ws: socket, state };
+		})();
+	
+
 </script>
 <!--prefetch_script-->
 <!--client_css-->

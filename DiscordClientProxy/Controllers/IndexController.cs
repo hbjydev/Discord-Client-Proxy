@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 namespace DiscordClientProxy.Controllers;
 
 [ApiController]
-[Route("/assets")]
+[Route("/")]
 public class IndexController : ControllerBase
 {
     private readonly ILogger<IndexController> _logger;
@@ -23,9 +23,9 @@ public class IndexController : ControllerBase
     [HttpGet("/app")]
     [HttpGet("/login")]
     [HttpGet("/register")]
-    [HttpGet("/channels/@me")]
+    [HttpGet("/channels/{*:_}")]
     [EnableCors]
-    public async Task<object> Home()
+    public async Task<object> Home(string? _)
     {
         if (AssetCache.Instance.ClientPageHtml is null)
         {
