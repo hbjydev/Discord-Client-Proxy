@@ -1,8 +1,11 @@
+using AngleSharp.Html;
+using AngleSharp.Html.Parser;
+
 namespace DiscordClientProxy.Utilities;
 
 public class TestClientBuilder
 {
-    private async static Task<string> GetOriginalHtml()
+    private static async Task<string> GetOriginalHtml()
     {
         var client = new HttpClient();
         var targetVer = Configuration.Instance.Version;
@@ -16,7 +19,14 @@ public class TestClientBuilder
                         : "https://canary.discordapp.com/app"
             );
             var html = await response.Content.ReadAsStringAsync();
-            return html;
+            //format html
+            var parser = new HtmlParser();
+
+            var document = parser.ParseDocument(html);
+
+            var sw = new StringWriter();
+            document.ToHtml(sw, new PrettyMarkupFormatter());
+            return sw.ToString();
         }
 
         if(Directory.Exists(Configuration.Instance.AssetCacheLocationResolved) && File.Exists(Path.Combine(Configuration.Instance.AssetCacheLocationResolved, "index.html")))
@@ -27,10 +37,18 @@ public class TestClientBuilder
         throw new Exception("Could not find index.html");
     }
 
-    public async static Task BuildClientPage()
+    public static async Task BuildClientPage()
     {
-        var html = await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Pages/index-updated.html");
-
+        var html = await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Pages/index.html");
+        var originalHtml = await GetOriginalHtml();
+        var lines = originalHtml.Split("\n");
+        html = html.Replace("<!--prefetch_script-->",
+            string.Join("\n", lines.Where(x => x.Contains("link rel=\"prefetch\" as=\"script\""))));
+        html = html.Replace("<!--client_script-->",
+            string.Join("\n", lines.Where(x => x.Contains("<script src="))));
+        html = html.Replace("<!--client_css-->",
+            string.Join("\n", lines.Where(x => x.Contains("link rel=\"stylesheet\""))));
+        html = html.Replace("integrity", "hashes");
         //inject debug utilities
         var debugOptions = Configuration.Instance.Client.DebugOptions;
         if (debugOptions.DumpWebsocketTrafficToBrowserConsole)
@@ -45,7 +63,7 @@ public class TestClientBuilder
         AssetCache.Instance.ClientPageHtml = html;
     }
 
-    public async static Task BuildDevPage()
+    public static async Task BuildDevPage()
     {
         var html = await File.ReadAllTextAsync("Resources/Pages/index-updated.html");
 
@@ -62,5 +80,4 @@ public class TestClientBuilder
 
         AssetCache.Instance.ClientPageHtml = html;
     }
-    
 }

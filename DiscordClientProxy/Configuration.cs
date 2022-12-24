@@ -20,14 +20,22 @@ public class Configuration
     
     public ClientOptions Client { get; set; } = new();
     public CacheOptions Cache { get; set; } = new();
-    
+    public DebugOptions Debug { get; set; } = new();
     [JsonIgnore] public string AssetCacheLocationResolved => AssetCacheLocation.Replace("$VERSION", Version);
+}
+
+public class DebugOptions
+{
+    public string? ClientEnvProxyUrl { get; set; } = null;
 }
 
 public class CacheOptions
 {
     public bool Disk { get; set; } = true;
     public bool Memory { get; set; } = true;
+    
+    public bool WipeOnStart { get; set; } = false;
+    public bool Preload { get; set; } = true;
 }
 
 public class ClientOptions

@@ -7,29 +7,32 @@ if (!Directory.Exists(DiscordClientProxy.Environment.BaseDir))
 
 Environment.CurrentDirectory = DiscordClientProxy.Environment.BaseDir;
 Configuration.Load();
+//handle cache settings
+if (Configuration.Instance.Cache.WipeOnStart && Directory.Exists(Configuration.Instance.AssetCacheLocationResolved))
+{
+    Console.WriteLine("Wiping cache...");
+    Directory.Delete(Configuration.Instance.AssetCacheLocationResolved, true);
+}
+else if(Configuration.Instance.Cache.Preload && Directory.Exists(Configuration.Instance.AssetCacheLocationResolved))
+    foreach (var file in Directory.GetFiles(Configuration.Instance.AssetCacheLocationResolved))
+    {
+        Console.WriteLine($"Preloading {file}...");
+        AssetCache.Instance.asset_cache.TryAdd(new FileInfo(file).Name, File.ReadAllBytes(file));
+    }
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-/*if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}*/
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
 app.MapControllers();
+
+if(Configuration.Instance.Debug.ClientEnvProxyUrl != null)
+    app.MapGet("/api/_fosscord/v1/global_env", async context =>
+    {
+        var client = new HttpClient();
+        var response = await client.GetAsync(Configuration.Instance.Debug.ClientEnvProxyUrl);
+        var content = await response.Content.ReadAsStringAsync();
+        await context.Response.WriteAsync(content);
+    });
 
 app.Run();

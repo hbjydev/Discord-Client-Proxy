@@ -32,15 +32,23 @@ public class AssetProxyController : ControllerBase
 
     private static async Task<byte[]?> GetFromDisk(string asset)
     {
-        if(System.IO.File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{asset}"))
-            return await System.IO.File.ReadAllBytesAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{asset}");
+        if (System.IO.File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{asset}"))
+        {
+            var data = await System.IO.File.ReadAllBytesAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{asset}");
+            if (Configuration.Instance.Cache.Memory) AssetCache.Instance.asset_cache.TryAdd(asset, data);
+            return data;
+        }
         return null;
     }
     private static async Task<byte[]?> GetFromNetwork(string asset)
     {
-        Console.WriteLine($"[Asset cache] Downloading {"https://discord.com/assets/" + asset}");
+        var url = "https://discord.com/assets/" + asset;
+        var path = $"{Configuration.Instance.AssetCacheLocationResolved}/{asset}";
+        
+        Console.WriteLine($"[Asset cache] Downloading {url}");
+        
         using var hc = new HttpClient();
-        var resp = await hc.GetAsync("https://discord.com/assets/" + asset);
+        var resp = await hc.GetAsync(url);
         if (!resp.IsSuccessStatusCode) return null;
         var bytes = await resp.Content.ReadAsByteArrayAsync();
 
@@ -55,13 +63,13 @@ public class AssetProxyController : ControllerBase
 
         if (Configuration.Instance.Cache.Disk)
         {
-            Console.WriteLine($"[Asset cache] Saving {"https://discord.com/assets/" + asset} -> {Configuration.Instance.AssetCacheLocationResolved}/{asset}");
+            Console.WriteLine($"[Asset cache] Saving {url} -> {path}");
             Directory.CreateDirectory(Configuration.Instance.AssetCacheLocationResolved);
             await System.IO.File.WriteAllBytesAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{asset}",
                 bytes);
         }
-
-        AssetCache.Instance.asset_cache.TryAdd(asset, bytes);
+        if (Configuration.Instance.Cache.Memory)
+            AssetCache.Instance.asset_cache.TryAdd(asset, bytes);
         return bytes;
     }
 
@@ -73,9 +81,15 @@ public class AssetProxyController : ControllerBase
     public static string PatchClient(string str)
     {
         TestClientPatchOptions patchOptions = Configuration.Instance.Client.DebugOptions.Patches;
+        //required patches
+        // - remove source map urls, saves some requests
         str = str.Replace("//# sourceMappingURL=", "//# disabledSourceMappingURL=");
+        // - move sentry to mine, as to not flood Discord.com's sentry
         str = str.Replace("https://fa97a90475514c03a42f80cd36d147c4@sentry.io/140984",
             "https://6bad92b0175d41a18a037a73d0cff282@sentry.thearcanebrony.net/12");
+        // - Modify global env warning
+        str = str.Replace("Global environment variables not set!", "Global environment variables not set!\\n[DiscordClientProxy] Make sure your reverse proxy is configured correctly!");
+        
         if (patchOptions.GatewayPlaintext)
         {
             str = str.Replace("e.isDiscordGatewayPlaintextSet=function(){0;return!1};",
