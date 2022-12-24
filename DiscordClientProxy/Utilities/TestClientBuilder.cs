@@ -6,6 +6,40 @@ namespace DiscordClientProxy.Utilities;
 
 public class TestClientBuilder
 {
+    public static async Task PrefetchClient()
+    {
+        if (!Configuration.Instance.Cache.PreloadFromWeb) return;
+        Console.WriteLine($"[TestClientBuilder] Fetching missing assets...");
+        
+        var originalHtml = await GetOriginalHtml();
+        var lines = originalHtml.Split("\n");
+        
+        var preloadScripts = await GetPreloadScripts(lines);
+        var mainScripts = await GetMainScripts(lines);
+        var css = await GetCss(lines);
+
+        Console.WriteLine($"[TestClientBuilder] Found {preloadScripts.Length+mainScripts.Length+css.Length} assets");
+        preloadScripts = preloadScripts.Where(x=>!File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x.Replace("/assets/", "")}")).ToArray();
+        mainScripts = mainScripts.Where(x=>!File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x.Replace("/assets/", "")}")).ToArray();
+        css = css.Where(x=>!File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x.Replace("/assets/", "")}")).ToArray();
+        
+        Console.WriteLine($"[TestClientBuilder] Found {preloadScripts.Length+mainScripts.Length+css.Length} assets");
+        await Task.WhenAll(mainScripts.Select(async x =>
+        {
+            await AssetCache.GetFromNetwork(x.Replace("/assets/", ""));
+        }));
+        await Task.WhenAll(css.Select(async x =>
+        {
+            await AssetCache.GetFromNetwork(x.Replace("/assets/", ""));
+        }));
+        var throttler = new SemaphoreSlim(System.Environment.ProcessorCount * 4);
+        await Task.WhenAll(preloadScripts.Select(async x =>
+        {
+            await throttler.WaitAsync();
+            await AssetCache.GetFromNetwork(x.Replace("/assets/", ""));
+            throttler.Release();
+        }));
+    }
     private static async Task<string> GetOriginalHtml()
     {
         var client = new HttpClient();
@@ -92,8 +126,7 @@ public class TestClientBuilder
 
         AssetCache.Instance.ClientPageHtml = html;
     }
-
-
+    
     public static async Task<string[]> GetPreloadScripts(string[]? lines = null)
     {
         lines ??= (await GetOriginalHtml()).Split("\n");
@@ -110,7 +143,6 @@ public class TestClientBuilder
 
         return scripts.ToArray();
     }
-
     public static async Task<string[]> GetMainScripts(string[]? lines = null)
     {
         lines ??= (await GetOriginalHtml()).Split("\n");
