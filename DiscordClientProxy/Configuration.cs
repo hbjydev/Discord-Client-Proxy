@@ -1,3 +1,4 @@
+using System.Xml.Linq;
 using Newtonsoft.Json;
 
 namespace DiscordClientProxy;
@@ -10,6 +11,11 @@ public class Configuration
         Instance = (File.Exists(Environment.BaseDir + "/config.json")
             ? JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(Environment.BaseDir + "/config.json"))
             : new Configuration()) ?? new Configuration();
+        Instance.Save();
+    }
+
+    public void Save()
+    {
         File.WriteAllText(Environment.BaseDir + "/config.json", JsonConvert.SerializeObject(Instance, Formatting.Indented));
     }
 
@@ -47,12 +53,5 @@ public class ClientDebugOptions
 {
     public bool DumpWebsocketTrafficToBrowserConsole { get; set; } = false;
     public bool DumpWebsocketTraffic { get; set; } = false;
-    public TestClientPatchOptions Patches { get; set; } = new();
-}
-
-public class TestClientPatchOptions
-{
-    public bool GatewayPlaintext { get; set; } = true;
-    public bool NoXssWarning { get; set; } = true;
-    public bool GatewayImmediateReconnect { get; set; } = true;
+    public Dictionary<string,bool> Patches { get; set; } = new();
 }

@@ -1,4 +1,5 @@
 using DiscordClientProxy;
+using DiscordClientProxy.Utilities;
 using Environment = System.Environment;
 
 //set working dir to environment specified base directory
@@ -19,6 +20,8 @@ else if(Configuration.Instance.Cache.Preload && Directory.Exists(Configuration.I
         Console.WriteLine($"Preloading {file}...");
         AssetCache.Instance.asset_cache.TryAdd(new FileInfo(file).Name, File.ReadAllBytes(file));
     }
+
+ClientPatcher.EnsureConfigPopulated();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCors(options =>

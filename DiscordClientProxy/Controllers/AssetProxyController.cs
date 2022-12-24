@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text;
+using DiscordClientProxy.Utilities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DiscordClientProxy.Controllers;
@@ -55,7 +56,7 @@ public class AssetProxyController : ControllerBase
         if (asset.EndsWith(".js") || asset.EndsWith(".css"))
         {
             bytes = Encoding.UTF8.GetBytes(
-                PatchClient(
+                await ClientPatcher.Patch(
                     Encoding.UTF8.GetString(bytes)
                 )
             );
@@ -76,37 +77,5 @@ public class AssetProxyController : ControllerBase
     private static async Task<byte[]?> GetFromCache(string asset)
     {
         return AssetCache.Instance.asset_cache.ContainsKey(asset) ? AssetCache.Instance.asset_cache[asset] : null;
-    }
-
-    public static string PatchClient(string str)
-    {
-        TestClientPatchOptions patchOptions = Configuration.Instance.Client.DebugOptions.Patches;
-        //required patches
-        // - remove source map urls, saves some requests
-        str = str.Replace("//# sourceMappingURL=", "//# disabledSourceMappingURL=");
-        // - move sentry to mine, as to not flood Discord.com's sentry
-        str = str.Replace("https://fa97a90475514c03a42f80cd36d147c4@sentry.io/140984",
-            "https://6bad92b0175d41a18a037a73d0cff282@sentry.thearcanebrony.net/12");
-        // - Modify global env warning
-        str = str.Replace("Global environment variables not set!", "Global environment variables not set!\\n[DiscordClientProxy] Make sure your reverse proxy is configured correctly!");
-        
-        if (patchOptions.GatewayPlaintext)
-        {
-            str = str.Replace("e.isDiscordGatewayPlaintextSet=function(){0;return!1};",
-                "e.isDiscordGatewayPlaintextSet = function() { return true };");
-        }
-
-        if (patchOptions.NoXssWarning)
-        {
-            str = str.Replace("console.log(\"%c\"+n.SELF_XSS_", "console.valueOf(n.SELF_XSS_");
-            str = str.Replace("console.log(\"%c\".concat(n.SELF_XSS_", "console.valueOf(console.valueOf(n.SELF_XSS_");
-        }
-
-        if (patchOptions.GatewayImmediateReconnect)
-        {
-            str = str.Replace("nextReconnectIsImmediate=!1", "nextReconnectIsImmediate = true");
-        }
-
-        return str;
     }
 }
