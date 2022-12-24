@@ -1,5 +1,6 @@
 using DiscordClientProxy.Classes;
 using DiscordClientProxy.ClientPatches;
+using DiscordClientProxy.ClientPatches.Branding;
 
 namespace DiscordClientProxy.Utilities;
 
@@ -13,6 +14,13 @@ public class ClientPatcher
         new PlainTextGatewayPatch(), // Use plaintext gateway, useful in debugging
         new NoXssWarningPatch(), // Disable the self-xss warnings (anti-copy-paste)
         new GatewayImmediateReconnectPatch(), // Remove reconnect delay in gateway
+        new KeepLocalStoragePatch(), // Prevent client from clearing localStorage 
+        new NoQrLoginPatch(), // Remove QR login
+        //branding
+        new BrandingLogoPatch(),
+        new BrandingPremiumPatch(),
+        //new BrandingNamePatch(), //FIXME: doesn't currently work
+        new BrandingGuildReferencePatch(),
     };
 
     public static void EnsureConfigPopulated()
