@@ -24,6 +24,7 @@ public class IndexController : ControllerBase
     [HttpGet("/login")]
     [HttpGet("/register")]
     [HttpGet("/channels/{*:_}")]
+    [HttpGet("/store")]
     [EnableCors]
     public async Task<object> Home(string? _)
     {

@@ -14,7 +14,7 @@ if (Configuration.Instance.Cache.WipeOnStart && Directory.Exists(Configuration.I
     Console.WriteLine("Wiping cache...");
     Directory.Delete(Configuration.Instance.AssetCacheLocationResolved, true);
 }
-else if(Configuration.Instance.Cache.Preload && Directory.Exists(Configuration.Instance.AssetCacheLocationResolved))
+else if(Configuration.Instance.Cache.PreloadFromDisk && Directory.Exists(Configuration.Instance.AssetCacheLocationResolved))
     foreach (var file in Directory.GetFiles(Configuration.Instance.AssetCacheLocationResolved))
     {
         Console.WriteLine($"Preloading {file}...");

@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using AngleSharp.Html;
 using AngleSharp.Html.Parser;
 
@@ -42,18 +43,24 @@ public class TestClientBuilder
         var html = await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Pages/index.html");
         var originalHtml = await GetOriginalHtml();
         var lines = originalHtml.Split("\n");
+        
+        var preloadScripts = await GetPreloadScripts(lines);
+        var mainScripts = await GetMainScripts(lines);
+        var css = await GetCss(lines);
+        
         html = html.Replace("<!--prefetch_script-->",
-            string.Join("\n", lines.Where(x => x.Contains("link rel=\"prefetch\" as=\"script\""))));
+            string.Join("\n", preloadScripts.Select(x => $"<link rel=\"prefetch\" as=\"script\" href=\"{x}\" />")));
         html = html.Replace("<!--client_script-->",
-            string.Join("\n", lines.Where(x => x.Contains("<script src="))));
+            string.Join("\n", mainScripts.Select(x => $"<script src=\"{x}\"></script>")));
         html = html.Replace("<!--client_css-->",
-            string.Join("\n", lines.Where(x => x.Contains("link rel=\"stylesheet\""))));
-        html = html.Replace("integrity", "hashes");
+            string.Join("\n", mainScripts.Select(x => $"<link rel=\"stylesheet\" href=\"{x}\" />")));
+        
         // fast identify
         html = html.Replace(
             "e.isFastConnect=t;t?e._doFastConnectIdentify():e._doResumeOrIdentify()",
             "e.isFastConnect=t; if (t !== undefined) e._doResumeOrIdentify();"
         );
+        
         //inject debug utilities
         var debugOptions = Configuration.Instance.Client.DebugOptions;
         if (debugOptions.DumpWebsocketTrafficToBrowserConsole)
@@ -84,5 +91,56 @@ public class TestClientBuilder
                 "\n<!-- preload plugin marker -->");
 
         AssetCache.Instance.ClientPageHtml = html;
+    }
+
+
+    public static async Task<string[]> GetPreloadScripts(string[]? lines = null)
+    {
+        lines ??= (await GetOriginalHtml()).Split("\n");
+        List<string> scripts = new();
+        var prefetchScriptHtml = lines.Where(x => x.Contains("link rel=\"prefetch\" as=\"script\"")).ToList();
+        foreach (var script in prefetchScriptHtml)
+        {
+            var match = Regex.Match(script, "href=\"(.*?)\"");
+            if (match.Success)
+            {
+                scripts.Add(match.Groups[1].Value);
+            }
+        }
+
+        return scripts.ToArray();
+    }
+
+    public static async Task<string[]> GetMainScripts(string[]? lines = null)
+    {
+        lines ??= (await GetOriginalHtml()).Split("\n");
+        List<string> scripts = new();
+        var mainScriptHtml = lines.Where(x => x.Contains("<script src=")).ToList();
+        foreach (var script in mainScriptHtml)
+        {
+            var match = Regex.Match(script, "src=\"(.*?)\"");
+            if (match.Success)
+            {
+                scripts.Add(match.Groups[1].Value);
+            }
+        }
+
+        return scripts.ToArray();
+    }
+    public static async Task<string[]> GetCss(string[]? lines = null)
+    {
+        lines ??= (await GetOriginalHtml()).Split("\n");
+        List<string> stylesheets = new();
+        var cssHtml = lines.Where(x => x.Contains("<link rel=\"stylesheet\"")).ToList();
+        foreach (var script in cssHtml)
+        {
+            var match = Regex.Match(script, "href=\"(.*?)\"");
+            if (match.Success)
+            {
+                stylesheets.Add(match.Groups[1].Value);
+            }
+        }
+
+        return stylesheets.ToArray();
     }
 }

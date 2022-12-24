@@ -41,7 +41,8 @@ public class CacheOptions
     public bool Memory { get; set; } = true;
     
     public bool WipeOnStart { get; set; } = false;
-    public bool Preload { get; set; } = true;
+    public bool PreloadFromDisk { get; set; } = true;
+    public bool PreloadFromWeb { get; set; } = true;
 }
 
 public class ClientOptions
