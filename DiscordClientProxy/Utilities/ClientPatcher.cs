@@ -16,10 +16,11 @@ public class ClientPatcher
         new GatewayImmediateReconnectPatch(), // Remove reconnect delay in gateway
         new KeepLocalStoragePatch(), // Prevent client from clearing localStorage 
         new NoQrLoginPatch(), // Remove QR login
+        new FastIdentifyPatch(),
         //branding
         new BrandingLogoPatch(),
         new BrandingPremiumPatch(),
-        //new BrandingNamePatch(), //FIXME: doesn't currently work
+        new BrandingNamePatch(),
         new BrandingGuildReferencePatch(),
     };
 
@@ -45,7 +46,7 @@ public class ClientPatcher
     {
         foreach (var patch in ClientPatches)
         {
-            //make sure its definately in there!
+            //make sure its definitely in there!
             if (!Configuration.Instance.Client.DebugOptions.Patches.ContainsKey(patch.GetType().Name))
             {
                 Configuration.Instance.Client.DebugOptions.Patches.TryAdd(patch.GetType().Name, patch.IsEnabledByDefault);

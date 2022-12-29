@@ -23,6 +23,7 @@ public class Configuration
 
     public string Version { get; set; } = "latest";
     public string AssetCacheLocation { get; set; } = "assets_cache/$VERSION/";
+    public string InstanceName { get; set; } = "Fosscord";
     
     public ClientOptions Client { get; set; } = new();
     public CacheOptions Cache { get; set; } = new();
