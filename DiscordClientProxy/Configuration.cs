@@ -48,6 +48,7 @@ public class CacheOptions
 
 public class ClientOptions
 {
+    public bool AddPrefetchTags { get; set; } = true;
     public ClientDebugOptions DebugOptions { get; set; } = new();
 }
 

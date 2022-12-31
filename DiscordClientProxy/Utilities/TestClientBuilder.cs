@@ -10,28 +10,22 @@ public class TestClientBuilder
     {
         if (!Configuration.Instance.Cache.PreloadFromWeb) return;
         Console.WriteLine($"[TestClientBuilder] Fetching missing assets...");
-        
+
         var originalHtml = await GetOriginalHtml();
         var lines = originalHtml.Split("\n");
-        
+
         var preloadScripts = await GetPreloadScripts(lines);
         var mainScripts = await GetMainScripts(lines);
         var css = await GetCss(lines);
 
-        Console.WriteLine($"[TestClientBuilder] Found {preloadScripts.Length+mainScripts.Length+css.Length} assets");
-        preloadScripts = preloadScripts.Where(x=>!File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x.Replace("/assets/", "")}")).ToArray();
-        mainScripts = mainScripts.Where(x=>!File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x.Replace("/assets/", "")}")).ToArray();
-        css = css.Where(x=>!File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x.Replace("/assets/", "")}")).ToArray();
-        
-        Console.WriteLine($"[TestClientBuilder] Found {preloadScripts.Length+mainScripts.Length+css.Length} assets");
-        await Task.WhenAll(mainScripts.Select(async x =>
-        {
-            await AssetCache.GetFromNetwork(x.Replace("/assets/", ""));
-        }));
-        await Task.WhenAll(css.Select(async x =>
-        {
-            await AssetCache.GetFromNetwork(x.Replace("/assets/", ""));
-        }));
+        Console.WriteLine($"[TestClientBuilder] Found {preloadScripts.Length + mainScripts.Length + css.Length} assets");
+        preloadScripts = preloadScripts.Where(x => !File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x.Replace("/assets/", "")}")).ToArray();
+        mainScripts = mainScripts.Where(x => !File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x.Replace("/assets/", "")}")).ToArray();
+        css = css.Where(x => !File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x.Replace("/assets/", "")}")).ToArray();
+
+        Console.WriteLine($"[TestClientBuilder] Found {preloadScripts.Length + mainScripts.Length + css.Length} assets");
+        await Task.WhenAll(mainScripts.Select(async x => { await AssetCache.GetFromNetwork(x.Replace("/assets/", "")); }));
+        await Task.WhenAll(css.Select(async x => { await AssetCache.GetFromNetwork(x.Replace("/assets/", "")); }));
         var throttler = new SemaphoreSlim(System.Environment.ProcessorCount * 4);
         await Task.WhenAll(preloadScripts.Select(async x =>
         {
@@ -40,6 +34,7 @@ public class TestClientBuilder
             throttler.Release();
         }));
     }
+
     private static async Task<string> GetOriginalHtml()
     {
         var client = new HttpClient();
@@ -64,7 +59,7 @@ public class TestClientBuilder
             return sw.ToString();
         }
 
-        if(Directory.Exists(Configuration.Instance.AssetCacheLocationResolved) && File.Exists(Path.Combine(Configuration.Instance.AssetCacheLocationResolved, "index.html")))
+        if (Directory.Exists(Configuration.Instance.AssetCacheLocationResolved) && File.Exists(Path.Combine(Configuration.Instance.AssetCacheLocationResolved, "index.html")))
         {
             return File.ReadAllText(Path.Combine(Configuration.Instance.AssetCacheLocationResolved, "index.html"));
         }
@@ -77,33 +72,29 @@ public class TestClientBuilder
         var html = await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Pages/index.html");
         var originalHtml = await GetOriginalHtml();
         var lines = originalHtml.Split("\n");
-        
+
         var preloadScripts = await GetPreloadScripts(lines);
         var mainScripts = await GetMainScripts(lines);
         var css = await GetCss(lines);
-        
-        html = html.Replace("<!--prefetch_script-->",
-            string.Join("\n", preloadScripts.Select(x => $"<link rel=\"prefetch\" as=\"script\" href=\"{x}\" />")));
+
+        if (Configuration.Instance.Client.AddPrefetchTags)
+            html = html.Replace("<!--prefetch_script-->",
+                string.Join("\n", preloadScripts.Select(x => $"<link rel=\"prefetch\" as=\"script\" href=\"{x}\" />")));
         html = html.Replace("<!--client_script-->",
             string.Join("\n", mainScripts.Select(x => $"<script src=\"{x}\"></script>")));
         html = html.Replace("<!--client_css-->",
             string.Join("\n", mainScripts.Select(x => $"<link rel=\"stylesheet\" href=\"{x}\" />")));
-        
-        // fast identify
-        html = html.Replace(
-            "e.isFastConnect=t;t?e._doFastConnectIdentify():e._doResumeOrIdentify()",
-            "e.isFastConnect=t; if (t !== undefined) e._doResumeOrIdentify();"
-        );
-        
+
+
         //inject debug utilities
         var debugOptions = Configuration.Instance.Client.DebugOptions;
         if (debugOptions.DumpWebsocketTrafficToBrowserConsole)
             html = html.Replace("<!-- preload plugin marker -->",
-                await File.ReadAllTextAsync(Environment.BinDir +"/Resources/Private/Injections/WebSocketDataLog.html") +
+                await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Private/Injections/WebSocketDataLog.html") +
                 "\n<!-- preload plugin marker -->");
         if (debugOptions.DumpWebsocketTraffic)
             html = html.Replace("<!-- preload plugin marker -->",
-                await File.ReadAllTextAsync(Environment.BinDir +"/Resources/Private/Injections/WebSocketDumper.html") +
+                await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Private/Injections/WebSocketDumper.html") +
                 "\n<!-- preload plugin marker -->");
 
         AssetCache.Instance.ClientPageHtml = html;
@@ -126,7 +117,7 @@ public class TestClientBuilder
 
         AssetCache.Instance.ClientPageHtml = html;
     }
-    
+
     public static async Task<string[]> GetPreloadScripts(string[]? lines = null)
     {
         lines ??= (await GetOriginalHtml()).Split("\n");
@@ -143,6 +134,7 @@ public class TestClientBuilder
 
         return scripts.ToArray();
     }
+
     public static async Task<string[]> GetMainScripts(string[]? lines = null)
     {
         lines ??= (await GetOriginalHtml()).Split("\n");
@@ -159,6 +151,7 @@ public class TestClientBuilder
 
         return scripts.ToArray();
     }
+
     public static async Task<string[]> GetCss(string[]? lines = null)
     {
         lines ??= (await GetOriginalHtml()).Split("\n");
