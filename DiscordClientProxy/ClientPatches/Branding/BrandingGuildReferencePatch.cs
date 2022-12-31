@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using DiscordClientProxy.Classes;
 
 namespace DiscordClientProxy.ClientPatches.Branding;
@@ -9,7 +8,7 @@ public class BrandingGuildReferencePatch : ClientPatch
     {
         if (!content.Contains("Server")) return content;
         Console.WriteLine($"[ClientPatch:{GetType().Name}] Applying patch...");
-        var variations = new Dictionary<string, string>()
+        var variations = new Dictionary<string, string>
         {
             {"\"Server\"", "\"Guild\""},
             {"\"Server ", "\"Guild "},
@@ -35,17 +34,11 @@ public class BrandingGuildReferencePatch : ClientPatch
             {" Servers,\"", " Guilds,\""},
             {" Servers,", " Guilds,"},
 
-            {"\nServers", "\nGuilds"},
+            {"\nServers", "\nGuilds"}
         };
         var count = variations.Count;
-        for (var i = 0; i < count; i++)
-        {
-            variations.Add(variations.ElementAt(i).Key.ToLower(), variations.ElementAt(i).Value.ToLower());
-        }
-        foreach (var variation in variations)
-        {
-            content = content.Replace(variation.Key, variation.Value);
-        }
+        for (var i = 0; i < count; i++) variations.Add(variations.ElementAt(i).Key.ToLower(), variations.ElementAt(i).Value.ToLower());
+        foreach (var variation in variations) content = content.Replace(variation.Key, variation.Value);
         return content;
     }
 }

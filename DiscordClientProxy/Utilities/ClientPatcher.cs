@@ -6,7 +6,7 @@ namespace DiscordClientProxy.Utilities;
 
 public class ClientPatcher
 {
-    public static ClientPatch[] ClientPatches = new ClientPatch[]
+    public static ClientPatch[] ClientPatches =
     {
         new RemoveSourceMapUrlPatch(), // Remove source map urls, saves some requests
         new AlternateSentryPatch(), // Move sentry to ours, as to not flood Discord.com's sentry
@@ -21,12 +21,12 @@ public class ClientPatcher
         new BrandingLogoPatch(),
         new BrandingPremiumPatch(),
         new BrandingNamePatch(),
-        new BrandingGuildReferencePatch(),
+        new BrandingGuildReferencePatch()
     };
 
     public static void EnsureConfigPopulated()
     {
-        Console.WriteLine($"[ClientPatcher] Populating config with patches...");
+        Console.WriteLine("[ClientPatcher] Populating config with patches...");
         foreach (var patch in ClientPatches)
         {
             if (Configuration.Instance.Client.DebugOptions.Patches.ContainsKey(patch.GetType().Name)) continue;
@@ -35,6 +35,7 @@ public class ClientPatcher
             Configuration.Instance.Save();
         }
     }
+
     public static async Task PatchFile(string path)
     {
         Console.WriteLine($"[ClientPatcher] Applying patches to {path}...");
@@ -42,6 +43,7 @@ public class ClientPatcher
         content = await Patch(content);
         await File.WriteAllTextAsync(path, content);
     }
+
     public static async Task<string> Patch(string content)
     {
         foreach (var patch in ClientPatches)
@@ -53,7 +55,7 @@ public class ClientPatcher
                 Configuration.Instance.Save();
             }
 
-            if(Configuration.Instance.Client.DebugOptions.Patches.TryGetValue(patch.GetType().Name, out bool enabled) && enabled)
+            if (Configuration.Instance.Client.DebugOptions.Patches.TryGetValue(patch.GetType().Name, out var enabled) && enabled)
                 content = await patch.ApplyPatch(content);
         }
 

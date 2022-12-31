@@ -8,7 +8,7 @@ public class GatewayImmediateReconnectPatch : ClientPatch
 
     public override async Task<string> ApplyPatch(string content)
     {
-        if(!content.Contains("nextReconnectIsImmediate")) return content;
+        if (!content.Contains("nextReconnectIsImmediate")) return content;
         Console.WriteLine($"[ClientPatch:{GetType().Name}] Applying patch...");
         content = content.Replace("nextReconnectIsImmediate=!1", "nextReconnectIsImmediate = true");
         return content;

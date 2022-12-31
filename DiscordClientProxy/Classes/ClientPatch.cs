@@ -3,6 +3,7 @@ namespace DiscordClientProxy.Classes;
 public abstract class ClientPatch
 {
     public virtual bool IsEnabledByDefault { get; set; } = true;
+
     public async Task ApplyPatchToFile(string filePath)
     {
         Console.WriteLine($"[ClientPatch:{GetType().Name}] Applying patch to {filePath}...");

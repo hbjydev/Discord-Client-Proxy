@@ -1,10 +1,22 @@
-using System.Xml.Linq;
 using Newtonsoft.Json;
 
 namespace DiscordClientProxy;
 
 public class Configuration
 {
+    public static Configuration Instance { get; private set; } = new();
+
+    public string Version { get; set; } = "latest";
+    public string AssetCacheLocation { get; set; } = "assets_cache/$VERSION/";
+    public string InstanceName { get; set; } = "Fosscord";
+
+    public ClientOptions Client { get; set; } = new();
+    public CacheOptions Cache { get; set; } = new();
+    public DebugOptions Debug { get; set; } = new();
+
+    [JsonIgnore]
+    public string AssetCacheLocationResolved => AssetCacheLocation.Replace("$VERSION", Version);
+
     //This must be delayed until after working dir is set!
     public static void Load()
     {
@@ -18,17 +30,6 @@ public class Configuration
     {
         File.WriteAllText(Environment.BaseDir + "/config.json", JsonConvert.SerializeObject(Instance, Formatting.Indented));
     }
-
-    public static Configuration Instance { get; private set; } = new();
-
-    public string Version { get; set; } = "latest";
-    public string AssetCacheLocation { get; set; } = "assets_cache/$VERSION/";
-    public string InstanceName { get; set; } = "Fosscord";
-    
-    public ClientOptions Client { get; set; } = new();
-    public CacheOptions Cache { get; set; } = new();
-    public DebugOptions Debug { get; set; } = new();
-    [JsonIgnore] public string AssetCacheLocationResolved => AssetCacheLocation.Replace("$VERSION", Version);
 }
 
 public class DebugOptions
@@ -40,7 +41,7 @@ public class CacheOptions
 {
     public bool Disk { get; set; } = true;
     public bool Memory { get; set; } = true;
-    
+
     public bool WipeOnStart { get; set; } = false;
     public bool PreloadFromDisk { get; set; } = true;
     public bool PreloadFromWeb { get; set; } = true;
@@ -56,5 +57,5 @@ public class ClientDebugOptions
 {
     public bool DumpWebsocketTrafficToBrowserConsole { get; set; } = false;
     public bool DumpWebsocketTraffic { get; set; } = false;
-    public Dictionary<string,bool> Patches { get; set; } = new();
+    public Dictionary<string, bool> Patches { get; set; } = new();
 }

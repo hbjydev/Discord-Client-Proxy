@@ -7,7 +7,7 @@ public class NoQrLoginPatch : ClientPatch
 {
     public override async Task<string> ApplyPatch(string content)
     {
-        if(!content.Contains("delete window.localStorage")) return content;
+        if (!content.Contains("delete window.localStorage")) return content;
         Console.WriteLine($"[ClientPatch:{GetType().Name}] Applying patch...");
         Console.WriteLine("This patch is broken, please fix!");
         content = Regex.Replace(content, @"\w\?\(\d,\w\.jsx\)\(\w*\,{authTokenCallback:this\.handleAuthToken}\):null", "null");

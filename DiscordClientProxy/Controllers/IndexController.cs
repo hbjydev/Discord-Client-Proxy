@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Text;
 using DiscordClientProxy.Utilities;
 using Microsoft.AspNetCore.Cors;
@@ -12,8 +11,8 @@ namespace DiscordClientProxy.Controllers;
 public class IndexController : ControllerBase
 {
     private readonly ILogger<IndexController> _logger;
-    
-    
+
+
     public IndexController(ILogger<IndexController> logger)
     {
         _logger = logger;
@@ -28,10 +27,7 @@ public class IndexController : ControllerBase
     [EnableCors]
     public async Task<object> Home(string? _)
     {
-        if (AssetCache.Instance.ClientPageHtml is null)
-        {
-            await TestClientBuilder.BuildClientPage();
-        }
+        if (AssetCache.Instance.ClientPageHtml is null) await TestClientBuilder.BuildClientPage();
 
         return File(Encoding.UTF8.GetBytes(AssetCache.Instance.ClientPageHtml), "text/html");
     }
@@ -39,15 +35,11 @@ public class IndexController : ControllerBase
     [HttpGet("/developers")]
     public async Task<object> Developers()
     {
-        
-        if (AssetCache.Instance.DevPageHtml is null)
-        {
-            await TestClientBuilder.BuildDevPage();
-        }
+        if (AssetCache.Instance.DevPageHtml is null) await TestClientBuilder.BuildDevPage();
 
         return File(Encoding.UTF8.GetBytes(AssetCache.Instance.ClientPageHtml), "text/html");
     }
-    
+
     [HttpGet("/dbg")]
     public async Task<object> Debug()
     {
@@ -55,7 +47,7 @@ public class IndexController : ControllerBase
         {
             AssetCache.Instance.ClientPageHtml,
             AssetCache.Instance.DevPageHtml,
-            asset_cache = AssetCache.Instance.asset_cache.Select(x=>new KeyValuePair<string, string>(x.Key, Encoding.UTF8.GetString(x.Value))),
+            asset_cache = AssetCache.Instance.asset_cache.Select(x => new KeyValuePair<string, string>(x.Key, Encoding.UTF8.GetString(x.Value)))
             //AssetCache.Instance.resource_cache
         }, Formatting.Indented);
     }

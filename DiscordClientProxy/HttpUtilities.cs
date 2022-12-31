@@ -23,12 +23,9 @@ public class HttpUtilities
             "ico" => "image/x-icon",
             _ => "application/octet-stream"
         };
-        
-        if(contentType == "application/octet-stream")
-        {
-            Console.WriteLine($"[WARN] Unknown content type for {filename}");
-        }
-        
+
+        if (contentType == "application/octet-stream") Console.WriteLine($"[WARN] Unknown content type for {filename}");
+
         return contentType;
     }
 }

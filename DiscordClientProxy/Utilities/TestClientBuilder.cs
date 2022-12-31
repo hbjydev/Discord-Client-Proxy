@@ -9,7 +9,7 @@ public class TestClientBuilder
     public static async Task PrefetchClient()
     {
         if (!Configuration.Instance.Cache.PreloadFromWeb) return;
-        Console.WriteLine($"[TestClientBuilder] Fetching missing assets...");
+        Console.WriteLine("[TestClientBuilder] Fetching missing assets...");
 
         var originalHtml = await GetOriginalHtml();
         var lines = originalHtml.Split("\n");
@@ -60,9 +60,7 @@ public class TestClientBuilder
         }
 
         if (Directory.Exists(Configuration.Instance.AssetCacheLocationResolved) && File.Exists(Path.Combine(Configuration.Instance.AssetCacheLocationResolved, "index.html")))
-        {
             return File.ReadAllText(Path.Combine(Configuration.Instance.AssetCacheLocationResolved, "index.html"));
-        }
 
         throw new Exception("Could not find index.html");
     }
@@ -83,7 +81,7 @@ public class TestClientBuilder
         html = html.Replace("<!--client_script-->",
             string.Join("\n", mainScripts.Select(x => $"<script src=\"{x}\"></script>")));
         html = html.Replace("<!--client_css-->",
-            string.Join("\n", mainScripts.Select(x => $"<link rel=\"stylesheet\" href=\"{x}\" />")));
+            string.Join("\n", css.Select(x => $"<link rel=\"stylesheet\" href=\"{x}\" />")));
 
 
         //inject debug utilities
@@ -126,10 +124,7 @@ public class TestClientBuilder
         foreach (var script in prefetchScriptHtml)
         {
             var match = Regex.Match(script, "href=\"(.*?)\"");
-            if (match.Success)
-            {
-                scripts.Add(match.Groups[1].Value);
-            }
+            if (match.Success) scripts.Add(match.Groups[1].Value);
         }
 
         return scripts.ToArray();
@@ -143,10 +138,7 @@ public class TestClientBuilder
         foreach (var script in mainScriptHtml)
         {
             var match = Regex.Match(script, "src=\"(.*?)\"");
-            if (match.Success)
-            {
-                scripts.Add(match.Groups[1].Value);
-            }
+            if (match.Success) scripts.Add(match.Groups[1].Value);
         }
 
         return scripts.ToArray();
@@ -160,10 +152,7 @@ public class TestClientBuilder
         foreach (var script in cssHtml)
         {
             var match = Regex.Match(script, "href=\"(.*?)\"");
-            if (match.Success)
-            {
-                stylesheets.Add(match.Groups[1].Value);
-            }
+            if (match.Success) stylesheets.Add(match.Groups[1].Value);
         }
 
         return stylesheets.ToArray();

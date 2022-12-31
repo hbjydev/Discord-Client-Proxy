@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using DiscordClientProxy.Classes;
 
 namespace DiscordClientProxy.ClientPatches.Branding;

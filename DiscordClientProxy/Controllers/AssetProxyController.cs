@@ -1,6 +1,3 @@
-using System.Collections.Concurrent;
-using System.Text;
-using DiscordClientProxy.Utilities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DiscordClientProxy.Controllers;
@@ -26,7 +23,7 @@ public class AssetProxyController : ControllerBase
         data ??= await AssetCache.GetFromCache(res);
         data ??= await AssetCache.GetFromDisk(res);
         data ??= await AssetCache.GetFromNetwork(res);
-        
+
         if (data is null) return NotFound();
         return File(data, HttpUtilities.GetContentTypeByFilename(res));
     }
