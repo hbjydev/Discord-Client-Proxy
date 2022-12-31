@@ -33,11 +33,12 @@ public class IndexController : ControllerBase
     }
 
     [HttpGet("/developers")]
+    [HttpGet("/developers/{*:_}")]
     public async Task<object> Developers()
     {
         if (AssetCache.Instance.DevPageHtml is null) await TestClientBuilder.BuildDevPage();
 
-        return File(Encoding.UTF8.GetBytes(AssetCache.Instance.ClientPageHtml), "text/html");
+        return File(Encoding.UTF8.GetBytes(AssetCache.Instance.DevPageHtml), "text/html");
     }
 
     [HttpGet("/dbg")]

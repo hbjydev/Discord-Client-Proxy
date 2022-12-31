@@ -47,7 +47,8 @@ public class AssetCache
         if (Configuration.Instance.Cache.Disk)
         {
             Console.WriteLine($"[Asset cache] Saving {url} -> {path}");
-            Directory.CreateDirectory(Configuration.Instance.AssetCacheLocationResolved);
+            Directory.CreateDirectory(Configuration.Instance.AssetCacheLocationResolved+"/"+asset);
+            Directory.Delete(Configuration.Instance.AssetCacheLocationResolved+"/"+asset);
             await File.WriteAllBytesAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{asset}",
                 bytes);
         }
