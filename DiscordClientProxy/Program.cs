@@ -12,7 +12,21 @@ Configuration.Load();
 if (Configuration.Instance.Cache.WipeOnStart && Directory.Exists(Configuration.Instance.AssetCacheLocationResolved))
 {
     Console.WriteLine("Wiping cache...");
-    Directory.Delete(Configuration.Instance.AssetCacheLocationResolved, true);
+    //Directory.Delete(Configuration.Instance.AssetCacheLocationResolved, true);
+    WipeAssetsRecursive(Configuration.Instance.AssetCacheLocationResolved);
+}
+
+void WipeAssetsRecursive(string dir)
+{
+    foreach (var directory in Directory.GetDirectories(dir))
+    {
+        WipeAssetsRecursive(directory);
+    }
+    foreach(var file in Directory.GetFiles(dir).Where(x=>x.EndsWith(".js") || x.EndsWith(".css")))
+    {
+        File.Delete(file);
+        Console.WriteLine($"Deleted {file}");
+    }
 }
 
 await TestClientBuilder.PrefetchClient();

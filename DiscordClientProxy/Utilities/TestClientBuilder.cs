@@ -27,12 +27,13 @@ public class TestClientBuilder
         await Task.WhenAll(mainScripts.Select(async x => { await AssetCache.GetFromNetwork(x.Replace("/assets/", "")); }));
         await Task.WhenAll(css.Select(async x => { await AssetCache.GetFromNetwork(x.Replace("/assets/", "")); }));
         var throttler = new SemaphoreSlim(System.Environment.ProcessorCount * 4);
-        await Task.WhenAll(preloadScripts.Select(async x =>
+        var tasks = preloadScripts.Select(async x =>
         {
             await throttler.WaitAsync();
             await AssetCache.GetFromNetwork(x.Replace("/assets/", ""));
             throttler.Release();
-        }));
+        }).ToList();
+        await Task.WhenAll(tasks);
     }
 
     private static async Task<string> GetHtmlFormatted(string url)

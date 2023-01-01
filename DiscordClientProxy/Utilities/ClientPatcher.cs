@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using DiscordClientProxy.Classes;
 using DiscordClientProxy.ClientPatches;
 using DiscordClientProxy.ClientPatches.Branding;
@@ -23,7 +24,7 @@ public class ClientPatcher
         new BrandingPremiumPatch(),
         new BrandingNamePatch(),
         new BrandingGuildReferencePatch(),
-        
+
         //extras
         new ChangelogPatch()
     };
@@ -63,6 +64,37 @@ public class ClientPatcher
                 content = await patch.ApplyPatch(content);
         }
 
+        if (Configuration.Instance.Cache.DownloadAssetsRecursive)
+        {
+            var assets = await FindMoreAssets(content);
+            assets = assets.Where(x=>!File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x}")).ToList();
+            if (assets.Count > 0)
+            {
+                Console.WriteLine($"[ClientPatcher] Found {assets.Count} assets to fetch");
+                var throttler = new SemaphoreSlim(System.Environment.ProcessorCount * 8);
+                var tasks = assets.Select(async x =>
+                {
+                    await throttler.WaitAsync();
+                    await AssetCache.GetFromNetwork(x.Replace("/assets/", ""));
+                    throttler.Release();
+                }).ToList();
+                await Task.WhenAll(tasks);
+            }
+        }
+
         return content;
+    }
+
+    public static async Task<List<string>> FindMoreAssets(string content)
+    {
+        string pattern = @"\.exports=.\..\+\""(.*?\..{0,5})\""";
+        var matches = Regex.Matches(content, pattern);
+        var assets = new List<string>();
+        foreach (Match m in matches)
+        {
+            assets.Add(m.Groups[1].Value);
+        }
+
+        return assets;
     }
 }
