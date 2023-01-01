@@ -1,6 +1,7 @@
 using DiscordClientProxy.Classes;
 using DiscordClientProxy.ClientPatches;
 using DiscordClientProxy.ClientPatches.Branding;
+using DiscordClientProxy.ClientPatches.CustomisationPatches;
 
 namespace DiscordClientProxy.Utilities;
 
@@ -21,7 +22,10 @@ public class ClientPatcher
         new BrandingLogoPatch(),
         new BrandingPremiumPatch(),
         new BrandingNamePatch(),
-        new BrandingGuildReferencePatch()
+        new BrandingGuildReferencePatch(),
+        
+        //extras
+        new ChangelogPatch()
     };
 
     public static void EnsureConfigPopulated()
