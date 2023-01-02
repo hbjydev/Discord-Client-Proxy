@@ -32,7 +32,7 @@
             "discordclientproxy" = {
               serviceConfig = {
                 ExecStart =
-                  "${self.packages.x86_64-linux.bots}/bin/DiscordClientProxy";
+                  "${self.packages.x86_64-linux.default}/bin/DiscordClientProxy";
                 Restart = "always";
                 RestartSec = "5";
                 User = "discordclientproxy";
