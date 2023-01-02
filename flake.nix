@@ -36,6 +36,7 @@
                 Restart = "always";
                 RestartSec = "5";
                 User = "discordclientproxy";
+                WorkingDirectory = "${self.modules.users.users.users.discordclientproxy.home}";
               };
             };
           };
