@@ -11,7 +11,8 @@
           dotnet-runtime = pkgs.dotnet-aspnetcore_7;
           src = ./.;
           projectFile = [ "DiscordClientProxy/DiscordClientProxy.csproj" ];
-          #nugetDeps = ./deps.nix; #generate with 
+          # nix-shell -p nuget-to-nix --run 'dotnet restore --packages=packages && nuget-to-nix packages >deps.nix && rm -rf packages'
+          nugetDeps = ./deps.nix;
           nativeBuildInputs = with pkgs; [ pkg-config ];
         };
       };
