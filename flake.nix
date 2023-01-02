@@ -27,7 +27,7 @@
           };
           users.groups.botcore = { };
         };
-        bots = {
+        proxy = {
           systemd.services = {
             "discordclientproxy" = {
               serviceConfig = {
