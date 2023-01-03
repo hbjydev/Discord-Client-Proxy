@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 
 namespace DiscordClientProxy;
@@ -42,7 +41,7 @@ public class CacheOptions
 {
     public bool Disk { get; set; } = true;
     public bool Memory { get; set; } = true;
-
+    public bool MemoryCacheHtml { get; set; } = true;
     public bool WipeOnStart { get; set; } = false;
     public bool DownloadAssetsRecursive { get; set; } = false;
     public bool PreloadFromDisk { get; set; } = true;

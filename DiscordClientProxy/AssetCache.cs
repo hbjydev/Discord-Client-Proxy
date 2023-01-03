@@ -9,8 +9,8 @@ public class AssetCache
     public readonly ConcurrentDictionary<string, byte[]> asset_cache = new();
     public readonly ConcurrentDictionary<string, byte[]> resource_cache = new();
     public static AssetCache Instance { get; } = new();
-    public string ClientPageHtml { get; set; }
-    public string DevPageHtml { get; set; }
+    public string? ClientPageHtml { get; set; }
+    public string? DevPageHtml { get; set; }
 
 
     public static async Task<byte[]?> GetFromDisk(string asset)

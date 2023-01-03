@@ -24,21 +24,25 @@ public class IndexController : ControllerBase
     [HttpGet("/register")]
     [HttpGet("/channels/{*:_}")]
     [HttpGet("/store")]
+    [HttpGet("/store/{*:_}")]
+    [HttpGet("/settings")]
+    [HttpGet("/settings/{*:_}")]
+    [HttpGet("/users/{*:_}")]
     [EnableCors]
     public async Task<object> Home(string? _)
     {
-        if (AssetCache.Instance.ClientPageHtml is null) await TestClientBuilder.BuildClientPage();
-
-        return File(Encoding.UTF8.GetBytes(AssetCache.Instance.ClientPageHtml), "text/html");
+        if (AssetCache.Instance.ClientPageHtml is not null)
+            return File(Encoding.UTF8.GetBytes(AssetCache.Instance.ClientPageHtml), "text/html");
+        return File(Encoding.UTF8.GetBytes(await TestClientBuilder.BuildClientPage()), "text/html");
     }
 
     [HttpGet("/developers")]
     [HttpGet("/developers/{*:_}")]
     public async Task<object> Developers()
     {
-        if (AssetCache.Instance.DevPageHtml is null) await TestClientBuilder.BuildDevPage();
-
-        return File(Encoding.UTF8.GetBytes(AssetCache.Instance.DevPageHtml), "text/html");
+        if (AssetCache.Instance.DevPageHtml is not null)
+            return File(Encoding.UTF8.GetBytes(AssetCache.Instance.DevPageHtml), "text/html");
+        return File(Encoding.UTF8.GetBytes(await TestClientBuilder.BuildDevPage()), "text/html");
     }
 
     [HttpGet("/dbg")]

@@ -50,6 +50,7 @@ public class TestClientBuilder
         document.ToHtml(sw, new PrettyMarkupFormatter());
         return sw.ToString();
     }
+
     private static async Task<string> GetOriginalHtml(string suffix = "")
     {
         var targetVer = Configuration.Instance.Version;
@@ -72,8 +73,10 @@ public class TestClientBuilder
         throw new Exception("Could not find index.html");
     }
 
-    public static async Task BuildClientPage()
+    public static async Task<string> BuildClientPage()
     {
+        Console.WriteLine("[TestClientBuilder] Building client page...");
+        //var html = "";
         var html = await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Pages/index.html");
         var originalHtml = await GetOriginalHtml();
         var lines = originalHtml.Split("\n");
@@ -101,12 +104,15 @@ public class TestClientBuilder
             html = html.Replace("<!-- preload plugin marker -->",
                 await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Private/Injections/WebSocketDumper.html") +
                 "\n<!-- preload plugin marker -->");
-
-        AssetCache.Instance.ClientPageHtml = html;
+        html += (await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Private/WelcomeScreenWrapper.html"))
+            .Replace("<!-- content -->", await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Private/WelcomeScreen.html"));
+        if (Configuration.Instance.Cache.MemoryCacheHtml) AssetCache.Instance.ClientPageHtml = html;
+        return html;
     }
 
-    public static async Task BuildDevPage()
+    public static async Task<string> BuildDevPage()
     {
+        Console.WriteLine("[TestClientBuilder] Building dev portal page...");
         var html = await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Pages/developers.html");
 
         var originalHtml = await GetOriginalHtml("/developers");
@@ -135,8 +141,9 @@ public class TestClientBuilder
             html = html.Replace("<!-- preload plugin marker -->",
                 await File.ReadAllTextAsync(Environment.BinDir + "/Resources/Private/Injections/WebSocketDumper.html") +
                 "\n<!-- preload plugin marker -->");
-
-        AssetCache.Instance.DevPageHtml = html;
+        
+        if (Configuration.Instance.Cache.MemoryCacheHtml) AssetCache.Instance.DevPageHtml = html;
+        return html;
     }
 
     public static async Task<string[]> GetPreloadScripts(string[]? lines = null)
