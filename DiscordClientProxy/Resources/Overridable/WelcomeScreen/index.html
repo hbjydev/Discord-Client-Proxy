@@ -1,5 +1,5 @@
-<center>
-    <img id="welcome-screen-fosscord-logo" src="https://raw.githubusercontent.com/fosscord/fosscord/master/assets-rebrand/svg/Fosscord-Wordmark-Orange.svg">
+<div style="text-align: center;">
+    <img id="welcome-screen-fosscord-logo" src="https://raw.githubusercontent.com/fosscord/fosscord/master/assets-rebrand/svg/Fosscord-Wordmark-Orange.svg" alt="Fosscord logo">
     <p id="welcome-screen-welcome-line">Welcome to Fosscord!</p>
     <div style="font-size: 0.8em;"><i id="welcome-screen-description"></i></div>
     <p id="welcome-screen-tos-line">You aren't supposed to see this, ever!!!! Script broke!!!!</p>
@@ -7,7 +7,7 @@
     <br>
     <p>Fosscord is an implementation of the Discord backend.</p>
     <p>For more information, visit <a href="https://fosscord.com">fosscord.com</a></p>
-</center>
+</div>
 
 <style>
     .welcome-screen-content {
@@ -27,12 +27,12 @@
 
 <script>
     //get instance info
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.open("GET", "/api/ping", true);
     xhr.onload = function (e) {
         if (xhr.readyState === 4) {
             if (xhr.status === 200) {
-                var data = JSON.parse(xhr.responseText);
+                let data = JSON.parse(xhr.responseText);
                 console.log(data);
 
                 //ignore the cursedness here

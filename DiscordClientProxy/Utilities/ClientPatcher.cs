@@ -64,37 +64,31 @@ public class ClientPatcher
                 content = await patch.ApplyPatch(content);
         }
 
-        if (Configuration.Instance.Cache.DownloadAssetsRecursive)
+        /*if (Configuration.Instance.Cache.DownloadAssetsRecursive)
         {
             var assets = await FindMoreAssets(content);
-            assets = assets.Where(x=>!File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x}")).ToList();
+            assets = assets.Where(x => !File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x}")).ToList();
             if (assets.Count > 0)
             {
                 Console.WriteLine($"[ClientPatcher] Found {assets.Count} assets to fetch");
-                var throttler = new SemaphoreSlim(System.Environment.ProcessorCount * 8);
-                var tasks = assets.Select(async x =>
+                var throttler = new SemaphoreSlim(256); //(System.Environment.ProcessorCount * 8);
+                var assettasks = assets.Where(x => !x.EndsWith("js") && !x.EndsWith("css"))
+                    .Select(x => Task.Factory.StartNew(() => AssetCache.StreamToDiskAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{x}", "https://discord.com/assets/" + x))).ToList();
+                var tasks = assets.Where(x => x.EndsWith("js") || x.EndsWith("css")).Select(x => Task.Factory.StartNew(async () =>
                 {
-                    await throttler.WaitAsync();
-                    await AssetCache.GetFromNetwork(x.Replace("/assets/", ""));
-                    throttler.Release();
-                }).ToList();
-                await Task.WhenAll(tasks);
+                    {
+                        await throttler.WaitAsync();
+                        await AssetCache.GetFromNetwork(x.Replace("/assets/", ""));
+                        throttler.Release();
+                    }
+                })).ToList();
+                //await Task.WhenAll(tasks);
+                await Task.WhenAll(assettasks);
             }
-        }
+        }*/
 
         return content;
     }
 
-    public static async Task<List<string>> FindMoreAssets(string content)
-    {
-        string pattern = @"\.exports=.\..\+\""(.*?\..{0,5})\""";
-        var matches = Regex.Matches(content, pattern);
-        var assets = new List<string>();
-        foreach (Match m in matches)
-        {
-            assets.Add(m.Groups[1].Value);
-        }
-
-        return assets;
-    }
+    
 }

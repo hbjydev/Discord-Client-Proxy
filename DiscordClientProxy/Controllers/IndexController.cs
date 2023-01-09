@@ -1,8 +1,9 @@
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using DiscordClientProxy.Utilities;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 
 namespace DiscordClientProxy.Controllers;
 
@@ -31,8 +32,6 @@ public class IndexController : ControllerBase
     [EnableCors]
     public async Task<object> Home(string? _)
     {
-        if (AssetCache.Instance.ClientPageHtml is not null)
-            return File(Encoding.UTF8.GetBytes(AssetCache.Instance.ClientPageHtml), "text/html");
         return File(Encoding.UTF8.GetBytes(await TestClientBuilder.BuildClientPage()), "text/html");
     }
 
@@ -40,20 +39,22 @@ public class IndexController : ControllerBase
     [HttpGet("/developers/{*:_}")]
     public async Task<object> Developers()
     {
-        if (AssetCache.Instance.DevPageHtml is not null)
-            return File(Encoding.UTF8.GetBytes(AssetCache.Instance.DevPageHtml), "text/html");
         return File(Encoding.UTF8.GetBytes(await TestClientBuilder.BuildDevPage()), "text/html");
     }
 
     [HttpGet("/dbg")]
     public async Task<object> Debug()
     {
-        return JsonConvert.SerializeObject(new
+        return JsonSerializer.Serialize(new
         {
-            AssetCache.Instance.ClientPageHtml,
-            AssetCache.Instance.DevPageHtml,
-            asset_cache = AssetCache.Instance.asset_cache.Select(x => new KeyValuePair<string, string>(x.Key, Encoding.UTF8.GetString(x.Value)))
+            MemoryStore.ClientPageHtml,
+            MemoryStore.DevPageHtml,
+            asset_cache = MemoryStore.asset_cache.Select(x => new KeyValuePair<string, string>(x.Key, Encoding.UTF8.GetString(x.Value)))
             //AssetCache.Instance.resource_cache
-        }, Formatting.Indented);
+        }, new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        });
     }
 }

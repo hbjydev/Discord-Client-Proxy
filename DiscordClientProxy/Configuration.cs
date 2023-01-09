@@ -20,15 +20,15 @@ public class Configuration
     //This must be delayed until after working dir is set!
     public static void Load()
     {
-        Instance = (File.Exists(Environment.BaseDir + "/config.json")
-            ? JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(Environment.BaseDir + "/config.json"))
+        Instance = (File.Exists(RuntimeEnvironment.BaseDir + "/config.json")
+            ? JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(RuntimeEnvironment.BaseDir + "/config.json"))
             : new Configuration()) ?? new Configuration();
         Instance.Save();
     }
 
     public void Save()
     {
-        File.WriteAllText(Environment.BaseDir + "/config.json", JsonConvert.SerializeObject(Instance, Formatting.Indented));
+        File.WriteAllText(RuntimeEnvironment.BaseDir + "/config.json", JsonConvert.SerializeObject(Instance, Formatting.Indented));
     }
 }
 
@@ -41,11 +41,21 @@ public class CacheOptions
 {
     public bool Disk { get; set; } = true;
     public bool Memory { get; set; } = true;
-    public bool MemoryCacheHtml { get; set; } = true;
-    public bool WipeOnStart { get; set; } = false;
+    public bool ReuseHtml { get; set; } = true;
     public bool DownloadAssetsRecursive { get; set; } = false;
-    public bool PreloadFromDisk { get; set; } = true;
-    public bool PreloadFromWeb { get; set; } = true;
+    public string AssetBaseUri { get; set; } = "https://discord.com/assets/";
+    public string AppBaseUri { get; set; } = "https://canary.discord.com/app/";
+    public string DevBaseUri { get; set; } = "https://canary.discord.com/developers/";
+    
+    public StartupCacheOptions StartupCacheOptions { get; set; } = new();
+}
+
+public class StartupCacheOptions
+{
+    public bool WipeCodeOnPatchlistChanged { get; set; } = true;
+    public bool WipeCodeOnStart { get; set; } = false;
+    public bool WipeAllOnStart { get; set; } = false;
+    public bool DownloadOnStart { get; set; } = true;
 }
 
 public class ClientOptions

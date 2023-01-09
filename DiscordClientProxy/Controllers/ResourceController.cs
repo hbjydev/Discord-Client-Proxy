@@ -17,6 +17,6 @@ public class ResourceController : ControllerBase
     [HttpGet("/resources/welcome-screen")]
     public async Task<object> WelcomeScreenContent()
     {
-        return File(Encoding.UTF8.GetBytes(await System.IO.File.ReadAllTextAsync(Environment.BinDir + "/Resources/Private/WelcomeScreen.html")), "text/html");
+        return File(Encoding.UTF8.GetBytes(await System.IO.File.ReadAllTextAsync(RuntimeEnvironment.BinDir + "/Resources/Overridable/WelcomeScreen/index.html")), "text/html");
     }
 }
