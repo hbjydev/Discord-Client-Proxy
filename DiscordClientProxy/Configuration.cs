@@ -7,7 +7,7 @@ public class Configuration
     public static Configuration Instance { get; private set; } = new();
 
     public string Version { get; set; } = "latest";
-    public string AssetCacheLocation { get; set; } = "assets_cache/$VERSION/";
+    public string AssetCacheLocation { get; set; } = "assets/$VERSION/";
     public string InstanceName { get; set; } = "Fosscord";
 
     public ClientOptions Client { get; set; } = new();
@@ -28,7 +28,7 @@ public class Configuration
 
     public void Save()
     {
-        File.WriteAllText(RuntimeEnvironment.BaseDir + "/config.json", JsonConvert.SerializeObject(Instance, Formatting.Indented));
+        File.WriteAllText("config.json", JsonConvert.SerializeObject(Instance, Formatting.Indented));
     }
 }
 
@@ -42,19 +42,20 @@ public class CacheOptions
     public bool Disk { get; set; } = true;
     public bool Memory { get; set; } = true;
     public bool ReuseHtml { get; set; } = true;
-    public bool DownloadAssetsRecursive { get; set; } = false;
+    public bool DownloadAssetsRecursive { get; set; } = true;
     public string AssetBaseUri { get; set; } = "https://discord.com/assets/";
     public string AppBaseUri { get; set; } = "https://canary.discord.com/app/";
     public string DevBaseUri { get; set; } = "https://canary.discord.com/developers/";
     
     public StartupCacheOptions StartupCacheOptions { get; set; } = new();
+    public int RecursiveDownloadDepth { get; set; } = 10;
 }
 
 public class StartupCacheOptions
 {
     public bool WipeCodeOnPatchlistChanged { get; set; } = true;
     public bool WipeCodeOnStart { get; set; } = false;
-    public bool WipeAllOnStart { get; set; } = false;
+    public bool WipeAllOnStart { get; set; } = true;
     public bool DownloadOnStart { get; set; } = true;
 }
 

@@ -8,18 +8,25 @@ public class MemoryStore
 {
     public static readonly ConcurrentDictionary<string, byte[]> asset_cache = new();
     public static readonly ConcurrentDictionary<string, byte[]> resource_cache = new();
-    public static string? ClientPageHtml { get; set; }
-    public static string? DevPageHtml { get; set; }
+    public static byte[]? ClientPageHtml { get; set; }
+    public static byte[]? DevPageHtml { get; set; }
     
-    public static List<string> PreloadScripts { get; set; } = new();
-    public static List<string> Stylesheets { get; set; } = new();
-    public static List<string> Scripts { get; set; } = new();
+    public static List<string> ClientPreloadScripts { get; set; } = new();
+    public static List<string> ClientStylesheets { get; set; } = new();
+    public static List<string> ClientScripts { get; set; } = new();
+    
+    public static List<string> DevPreloadScripts { get; set; } = new();
+    public static List<string> DevStylesheets { get; set; } = new();
+    public static List<string> DevScripts { get; set; } = new();
 }
 
 public class TieredAssetStore
 {
     public static async Task<byte[]> GetAsset(string asset)
     {
+        //ensure no asset prefix
+        asset = asset.Replace("/assets/", "");
+        
         byte[] data;
         if (Configuration.Instance.Cache.Memory && MemoryStore.asset_cache.TryGetValue(asset, out data)) return data;
         if (Configuration.Instance.Cache.Disk && File.Exists(Configuration.Instance.AssetCacheLocationResolved + asset))
@@ -39,6 +46,14 @@ public class TieredAssetStore
 
         await PromoteAsset(asset, data);
         return data;
+    }
+
+    public static List<string> EnumerateAssets()
+    {
+        var entries = new List<string>();
+        entries.AddRange(MemoryStore.asset_cache.Keys);
+        entries.AddRange(Directory.EnumerateFiles(Configuration.Instance.AssetCacheLocationResolved).Select(x=>new FileInfo(x).Name));
+        return entries.Distinct().ToList();
     }
 
     private static async Task PromoteAsset(string asset, byte[] data)

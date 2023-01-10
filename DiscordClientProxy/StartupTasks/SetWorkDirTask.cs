@@ -11,7 +11,7 @@ public class SetWorkDirTask : IStartupTask
             Directory.CreateDirectory(RuntimeEnvironment.BaseDir);
         Environment.CurrentDirectory = RuntimeEnvironment.BaseDir;
         
-        ResourceDirHandler.CreateResourceDirInfo();
+        Console.WriteLine($"[Startup/SetWorkDirTask] Working directory: {Environment.CurrentDirectory}");
         
         return Task.CompletedTask;
     }

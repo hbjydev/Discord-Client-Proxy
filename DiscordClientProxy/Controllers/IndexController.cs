@@ -32,14 +32,14 @@ public class IndexController : ControllerBase
     [EnableCors]
     public async Task<object> Home(string? _)
     {
-        return File(Encoding.UTF8.GetBytes(await TestClientBuilder.BuildClientPage()), "text/html");
+        return File(await TestClientBuilder.BuildClientPage(), "text/html");
     }
 
     [HttpGet("/developers")]
     [HttpGet("/developers/{*:_}")]
     public async Task<object> Developers()
     {
-        return File(Encoding.UTF8.GetBytes(await TestClientBuilder.BuildDevPage()), "text/html");
+        return File(await TestClientBuilder.BuildDevPage(), "text/html");
     }
 
     [HttpGet("/dbg")]
@@ -47,8 +47,8 @@ public class IndexController : ControllerBase
     {
         return JsonSerializer.Serialize(new
         {
-            MemoryStore.ClientPageHtml,
-            MemoryStore.DevPageHtml,
+            ClientPageHtml = Encoding.UTF8.GetString(MemoryStore.ClientPageHtml??Array.Empty<byte>()),
+            DevPageHtml = Encoding.UTF8.GetString(MemoryStore.DevPageHtml??Array.Empty<byte>()),
             asset_cache = MemoryStore.asset_cache.Select(x => new KeyValuePair<string, string>(x.Key, Encoding.UTF8.GetString(x.Value)))
             //AssetCache.Instance.resource_cache
         }, new JsonSerializerOptions

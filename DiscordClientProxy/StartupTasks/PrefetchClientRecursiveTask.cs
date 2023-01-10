@@ -8,16 +8,32 @@ using DiscordClientProxy.Utilities;
 
 namespace DiscordClientProxy.StartupTasks;
 
-public class PrefetchClientTask : IStartupTask
+public class PrefetchClientRecursiveTask : IStartupTask
 {
-    public int Order { get; } = 10;
+    public int Order { get; } = 11;
 
     public async Task ExecuteAsync()
     {
         //await TestClientBuilder.PrefetchClient();
         if (!Configuration.Instance.Cache.StartupCacheOptions.DownloadOnStart) return;
+        if (!Configuration.Instance.Cache.DownloadAssetsRecursive) return;
         if (!Configuration.Instance.Version.Contains("latest")) return;
-        await FetchAssets(Configuration.Instance.Cache.AppBaseUri);
+        for (int i = 0; i < Configuration.Instance.Cache.RecursiveDownloadDepth; i++)
+        {
+            Console.WriteLine($"[Startup/PrefetchClientResursiveTask] Downloading assets recursively, depth {i + 1} of {Configuration.Instance.Cache.RecursiveDownloadDepth}");
+            Console.WriteLine("[Startup/PrefetchClientResursiveTask] ==> Enumerating assets...");
+            var files = TieredAssetStore.EnumerateAssets().Where(x => x.EndsWith(".js") || x.EndsWith(".css"));
+            Console.WriteLine("[Startup/PrefetchClientResursiveTask] ==> Reading assets...");
+            var assettasks = files
+                .Select(x => Task.Factory.StartNew(() => TieredAssetStore.GetAsset(x))).ToList();
+            await Task.WhenAll(assettasks);
+            var fileContentsAsBytes = assettasks.Select(x => x.Result.Result);
+            Console.WriteLine("[Startup/PrefetchClientResursiveTask] ==> Reading assets as strings...");
+            var fileContents = fileContentsAsBytes.Select(x => Encoding.UTF8.GetString(x));
+            Console.WriteLine("[Startup/PrefetchClientResursiveTask] ==> Parsing assets...");
+            
+        }
+        //await FetchAssets(Configuration.Instance.Cache.AppBaseUri);
         //await FetchAssets(Configuration.Instance.Cache.DevBaseUri);
     }
 
@@ -67,26 +83,29 @@ public class PrefetchClientTask : IStartupTask
         }
 
         var assettasks = assets
-            .Select(TieredAssetStore.GetAsset).ToList();
+            .Select(x => Task.Factory.StartNew(() => TieredAssetStore.GetAsset(x))).ToList();
         await Task.WhenAll(assettasks);
-        Console.WriteLine("Downloading done!!!!!");
-    }
+        //download
+        // foreach (var asset in assets)
+        // {
+        //     var assetUrl = Configuration.Instance.Cache.AssetBaseUri + asset.Replace("/assets/", "");
+        //     Console.WriteLine($"[Startup/PrefetchClientTask] Downloading {assetUrl}");
+        //     // await GetHtmlFormatted(assetUrl);
+        // }
 
-    private static async Task Download(List<string> assets)
-    {
-        var assettasks = assets
-            .Select(x => Task.Factory.StartNew(() =>
-            {
-                DownloadFile(x);
-            })).ToList();
-        await Task.WhenAll(assettasks);
-        
+        var files = Directory.GetFiles(Configuration.Instance.AssetCacheLocationResolved).Where(x => x.EndsWith(".js") || x.EndsWith(".css"));
+        foreach (var file in files)
+        {
+
+            DownloadFile(file);
+
+        }
     }
 
     private static async Task DownloadFile(string asset)
     {
         var content = Encoding.UTF8.GetString(await TieredAssetStore.GetAsset(asset));
-        var assets = await FindMoreAssets(content);
+        var assets = FindMoreAssets(content);
         assets = assets.Where(x => !File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x}")).ToList();
         if (assets.Count > 0)
         {
@@ -104,8 +123,9 @@ public class PrefetchClientTask : IStartupTask
         document.ToHtml(sw, new PrettyMarkupFormatter());
         return sw.ToString();
     }
-
-    public static async Task<List<string>> FindMoreAssets(string content)
+    
+    //no async here :c
+    public static List<string> FindMoreAssets(string content)
     {
         string pattern = @"\.exports=.\..\+\""(.*?\..{0,5})\""";
         var matches = Regex.Matches(content, pattern);
