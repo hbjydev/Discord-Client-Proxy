@@ -1,10 +1,7 @@
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Text.Unicode;
-using AngleSharp.Html;
-using AngleSharp.Html.Parser;
 using DiscordClientProxy.Interfaces;
-using DiscordClientProxy.Utilities;
 
 namespace DiscordClientProxy.StartupTasks;
 
@@ -31,109 +28,51 @@ public class PrefetchClientRecursiveTask : IStartupTask
             Console.WriteLine("[Startup/PrefetchClientResursiveTask] ==> Reading assets as strings...");
             var fileContents = fileContentsAsBytes.Select(x => Encoding.UTF8.GetString(x));
             Console.WriteLine("[Startup/PrefetchClientResursiveTask] ==> Parsing assets...");
+            var assets = new List<string>();
+            fileContents.Select(FindMoreAssets).ToList().ForEach(x => assets.AddRange(x));
+            assets = assets.Distinct().ToList();
+            Console.WriteLine($"[Startup/PrefetchClientResursiveTask] ==> Identified {assets.Count} assets...");
+            assets.RemoveAll(x => File.Exists(Configuration.Instance.AssetCacheLocationResolved + x));
             
+            if (assets.Count == 0)
+            {
+                Console.WriteLine("[Startup/PrefetchClientResursiveTask] ==> No new assets found, stopping...");
+                break;
+            }
+            else
+            {
+                Console.WriteLine($"[Startup/PrefetchClientResursiveTask] ==> Getting {assets.Count} new assets...");
+                var assetDownloadTasks = assets
+                    .Select(TieredAssetStore.GetAsset).ToList();
+                await Task.WhenAll(assetDownloadTasks);
+            }
         }
         //await FetchAssets(Configuration.Instance.Cache.AppBaseUri);
         //await FetchAssets(Configuration.Instance.Cache.DevBaseUri);
+
+        TieredAssetStore.RecordNewDownloads = true;
     }
 
-    private static async Task FetchAssets(string url)
-    {
-        Console.WriteLine($"[Startup/PrefetchClientTask] Downloading app HTML from {url}");
-        var html = (await GetHtmlFormatted(url)).Split('\n');
-        Console.WriteLine("[Startup/PrefetchClientTask] Fetching missing assets...");
-        var assets = new List<string>();
-        MemoryStore.ClientScripts.Clear();
-        MemoryStore.ClientPreloadScripts.Clear();
-        MemoryStore.ClientStylesheets.Clear();
-        //css
-        var cssHtml = html.Where(x => x.Contains("<link rel=\"stylesheet\"")).ToList();
-        foreach (var script in cssHtml)
-        {
-            var match = Regex.Match(script, "href=\"(.*?)\"");
-            if (match.Success)
-            {
-                assets.Add(match.Groups[1].Value);
-                MemoryStore.ClientStylesheets.Add(match.Groups[1].Value);
-            }
-        }
-
-        //scripts
-        var mainScriptHtml = html.Where(x => x.Contains("<script src=")).ToList();
-        foreach (var script in mainScriptHtml)
-        {
-            var match = Regex.Match(script, "src=\"(.*?)\"");
-            if (match.Success)
-            {
-                assets.Add(match.Groups[1].Value);
-                MemoryStore.ClientScripts.Add(match.Groups[1].Value);
-            }
-        }
-
-        //preload
-        var prefetchScriptHtml = html.Where(x => x.Contains("link rel=\"prefetch\" as=\"script\"")).ToList();
-        foreach (var script in prefetchScriptHtml)
-        {
-            var match = Regex.Match(script, "href=\"(.*?)\"");
-            if (match.Success)
-            {
-                assets.Add(match.Groups[1].Value);
-                MemoryStore.ClientPreloadScripts.Add(match.Groups[1].Value);
-            }
-        }
-
-        var assettasks = assets
-            .Select(x => Task.Factory.StartNew(() => TieredAssetStore.GetAsset(x))).ToList();
-        await Task.WhenAll(assettasks);
-        //download
-        // foreach (var asset in assets)
-        // {
-        //     var assetUrl = Configuration.Instance.Cache.AssetBaseUri + asset.Replace("/assets/", "");
-        //     Console.WriteLine($"[Startup/PrefetchClientTask] Downloading {assetUrl}");
-        //     // await GetHtmlFormatted(assetUrl);
-        // }
-
-        var files = Directory.GetFiles(Configuration.Instance.AssetCacheLocationResolved).Where(x => x.EndsWith(".js") || x.EndsWith(".css"));
-        foreach (var file in files)
-        {
-
-            DownloadFile(file);
-
-        }
-    }
-
-    private static async Task DownloadFile(string asset)
-    {
-        var content = Encoding.UTF8.GetString(await TieredAssetStore.GetAsset(asset));
-        var assets = FindMoreAssets(content);
-        assets = assets.Where(x => !File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x}")).ToList();
-        if (assets.Count > 0)
-        {
-            Console.WriteLine($"[ClientPatcher] Found {assets.Count} assets to fetch");
-        }
-    }
-
-    private static async Task<string> GetHtmlFormatted(string url)
-    {
-        using var client = new HttpClient();
-        var response = await client.GetAsync(url);
-        var html = await response.Content.ReadAsStringAsync();
-        var document = new HtmlParser().ParseDocument(html);
-        var sw = new StringWriter();
-        document.ToHtml(sw, new PrettyMarkupFormatter());
-        return sw.ToString();
-    }
-    
     //no async here :c
     public static List<string> FindMoreAssets(string content)
     {
-        string pattern = @"\.exports=.\..\+\""(.*?\..{0,5})\""";
-        var matches = Regex.Matches(content, pattern);
         var assets = new List<string>();
-        foreach (Match m in matches)
+        assets.AddRange(Regex.Matches(content, @"\.exports=.\..\+\""(.*?\..{0,5})\""").Select(x => x.Groups[1].Value));
+        assets.AddRange(Regex.Matches(content, @"url\(/assets/(.*?)\)").Select(x => x.Groups[1].Value));
+        assets.AddRange(Regex.Matches(content, @"\+""([a-zA-Z0-9]+?\..{1,5})""").Select(x => x.Groups[1].Value)); //.Where(x => !assets.Contains(x))
+        assets.AddRange(Regex.Matches(content, @"\+""([a-zA-Z0-9]+?\.worker\.js)""").Select(x => x.Groups[1].Value));
+        assets.AddRange(Regex.Matches(content, @"\+""([a-zA-Z0-9]+?\.worker\.js)""").Select(x => x.Groups[1].Value));
+        var questionableMatches = new List<string>();
+        
+
+        if (questionableMatches.Any())
         {
-            assets.Add(m.Groups[1].Value);
+            Console.WriteLine("Found questionable matches!!!!");
+            Console.WriteLine(string.Join("\n", questionableMatches));
+            Debugger.Break();
+            //Thread.Sleep(10000);
         }
+        assets.AddRange(questionableMatches);
 
         return assets;
     }

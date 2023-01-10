@@ -7,9 +7,6 @@ namespace DiscordClientProxy;
 
 public class AssetCache
 {
-
-    
-
     public static async Task FindEmojiMatches()
     {
         if (!Directory.Exists("twemoji"))

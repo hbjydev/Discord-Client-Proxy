@@ -22,6 +22,7 @@ public class MemoryStore
 
 public class TieredAssetStore
 {
+    public static bool RecordNewDownloads = false;
     public static async Task<byte[]> GetAsset(string asset)
     {
         //ensure no asset prefix
@@ -42,6 +43,8 @@ public class TieredAssetStore
                         Encoding.UTF8.GetString(data)
                     )
                 );
+            if(RecordNewDownloads)
+                await File.AppendAllTextAsync("cache_misses", $"{asset}\n");
         }
 
         await PromoteAsset(asset, data);

@@ -18,7 +18,7 @@ public class AssetProxyController : ControllerBase
     {
         //we dont have map files, so dont even bother
         if (res.EndsWith(".map")) return NotFound();
-        if (res.EndsWith(".svg")) return Redirect("https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/1f004.svg");
+        //if (res.EndsWith(".svg")) return Redirect("https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/1f004.svg");
 
         byte[] data = await TieredAssetStore.GetAsset(res);
 

@@ -9,6 +9,7 @@ public class CleanAssetsTask : IStartupTask
 
     public async Task ExecuteAsync()
     {
+        return;
         if (Configuration.Instance.Cache.StartupCacheOptions.WipeAllOnStart && Directory.Exists(Configuration.Instance.AssetCacheLocationResolved))
         {
             Console.WriteLine("Wiping cache...");
@@ -24,7 +25,7 @@ public class CleanAssetsTask : IStartupTask
         else if (Configuration.Instance.Cache.StartupCacheOptions.WipeCodeOnPatchlistChanged && Directory.Exists(Configuration.Instance.AssetCacheLocationResolved))
         {
             Console.WriteLine("Patch list changed... Wiping cache...");
-            WipeAssetsRecursive(Configuration.Instance.AssetCacheLocationResolved);
+            //WipeAssetsRecursive(Configuration.Instance.AssetCacheLocationResolved);
         }
     }
 

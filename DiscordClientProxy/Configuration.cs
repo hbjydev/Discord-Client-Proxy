@@ -55,7 +55,7 @@ public class StartupCacheOptions
 {
     public bool WipeCodeOnPatchlistChanged { get; set; } = true;
     public bool WipeCodeOnStart { get; set; } = false;
-    public bool WipeAllOnStart { get; set; } = true;
+    public bool WipeAllOnStart { get; set; } = false;
     public bool DownloadOnStart { get; set; } = true;
 }
 
