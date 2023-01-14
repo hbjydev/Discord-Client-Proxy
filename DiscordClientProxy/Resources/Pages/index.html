@@ -15,13 +15,45 @@
 <script>
 			window.__OVERLAY__ = /overlay/.test(location.pathname);
 			window.__BILLING_STANDALONE__ = /^\/billing/.test(location.pathname);
-			
+			window.GLOBAL_ENV = {
+                WEBAPP_ENDPOINT: "",
+                ASSET_ENDPOINT: "",
+                MEDIA_PROXY_ENDPOINT: "http://dcp.localhost",
+                WIDGET_ENDPOINT: "/api/widget",
+                INVITE_HOST: "/api/invite",
+                GUILD_TEMPLATE_HOST: "discord.new",
+                GIFT_CODE_HOST: "discord.gift",
+                MARKETING_ENDPOINT: "//discord.com",
+                NETWORKING_ENDPOINT: "//router.discordapp.net",
+                RTC_LATENCY_ENDPOINT: "//latency.discord.media/rtc",
+                ACTIVITY_APPLICATION_HOST: "discordsays.com",
+                REMOTE_AUTH_ENDPOINT: "//localhost:3020",
+                MIGRATION_SOURCE_ORIGIN: "https://discordapp.com",
+                MIGRATION_DESTINATION_ORIGIN: "https://discord.com",
+                RELEASE_CHANNEL: "canary",
+                DISCORD_TEST: false,
+                PROJECT_ENV: "canary",
+                SENTRY_TAGS: {
+                    "buildId": "75e36d9",
+                    "buildType": "normal"
+                },
+                HTML_TIMESTAMP: 638074888762315600,
+                ALGOLIA_KEY: "aca0d7082e4e63af5ba5917d5e96bed0",
+                BRAINTREE_KEY: "production_5st77rrc_49pp2rp4phym7387",
+                STRIPE_KEY: "pk_live_CUQtlpQUF0vufWpnpUmQvcdi"
+            }
+            
 			var xmlhttp = new XMLHttpRequest();
-            var url = "/api/_fosscord/v1/global_env";
+            var url = "/api/ping";
             xmlhttp.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
-                    window.GLOBAL_ENV = JSON.parse(this.responseText);
-                };
+                    var data = JSON.parse(this.responseText);
+                    window.GLOBAL_ENV.API_VERSION = data.instance.endpoints.defaultApiVersion;
+                    window.GLOBAL_ENV.API_ENDPOINT = data.instance.endpoints.apiEndpoint;
+                    window.GLOBAL_ENV.CDN_ENDPOINT = data.instance.endpoints.cdnEndpoint;
+                    window.GLOBAL_ENV.GATEWAY_ENDPOINT = data.instance.endpoints.gatewayEndpoint;
+                    console.log(window.GLOBAL_ENV);
+                }
             }
            
             xmlhttp.open("GET", url, false);

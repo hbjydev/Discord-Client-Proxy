@@ -19,12 +19,12 @@ public class AssetCache
         {
             Console.WriteLine("Getting twemoji hashes...");
             var twemojiHashes = Directory.GetFiles("twemoji/assets/svg")
-                .Select(x => (x, BytesToString(sha256Hash.ComputeHash(File.OpenRead(x)))))
+                .Select(x => (x, BytesToString(SHA256.Create().ComputeHash(File.OpenRead(x)))))
                 .ToDictionary(x => x.Item2, x => x.Item1);
             Console.WriteLine("Getting asset hashes...");
             var assetHashes = Directory.GetFiles(Configuration.Instance.AssetCacheLocationResolved)
                 .Where(x => x.EndsWith(".svg"))
-                .Select(x => (x, BytesToString(sha256Hash.ComputeHash(File.OpenRead(x)))))
+                .Select(x => (x, BytesToString(SHA256.Create().ComputeHash(File.OpenRead(x)))))
                 .ToDictionary(x => x.Item2, x => x.Item1);
             //match filenames based on hashes
             Console.WriteLine("Matching...");

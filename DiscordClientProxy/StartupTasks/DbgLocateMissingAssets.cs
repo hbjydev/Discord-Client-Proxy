@@ -15,6 +15,7 @@ public class DbgLocateMissingAssets : IStartupTask
 
     public async Task ExecuteAsync()
     {
+        return;
         if (!File.Exists("cache_misses")) return;
         File.Delete("missing_matches");
         var lines = (await File.ReadAllTextAsync("cache_misses")).Split('\n');

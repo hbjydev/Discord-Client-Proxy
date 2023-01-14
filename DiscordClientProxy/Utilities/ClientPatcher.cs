@@ -26,7 +26,12 @@ public class ClientPatcher
         new BrandingGuildReferencePatch(),
 
         //extras
-        new ChangelogPatch()
+        new ChangelogPatch(),
+        
+        //fun stuff
+        new ForceIsStaffPatch(),
+        new ExperimentsOnStablePatch(),
+        new EnableCommonExperimentsPatch()
     };
 
     public static void EnsureConfigPopulated()
@@ -66,25 +71,25 @@ public class ClientPatcher
 
         /*if (Configuration.Instance.Cache.DownloadAssetsRecursive)
         {
-            var assets = await FindMoreAssets(content);
-            assets = assets.Where(x => !File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x}")).ToList();
-            if (assets.Count > 0)
-            {
-                Console.WriteLine($"[ClientPatcher] Found {assets.Count} assets to fetch");
-                var throttler = new SemaphoreSlim(256); //(System.Environment.ProcessorCount * 8);
-                var assettasks = assets.Where(x => !x.EndsWith("js") && !x.EndsWith("css"))
-                    .Select(x => Task.Factory.StartNew(() => AssetCache.StreamToDiskAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{x}", "https://discord.com/assets/" + x))).ToList();
-                var tasks = assets.Where(x => x.EndsWith("js") || x.EndsWith("css")).Select(x => Task.Factory.StartNew(async () =>
-                {
-                    {
-                        await throttler.WaitAsync();
-                        await AssetCache.GetFromNetwork(x.Replace("/assets/", ""));
-                        throttler.Release();
-                    }
-                })).ToList();
-                //await Task.WhenAll(tasks);
-                await Task.WhenAll(assettasks);
-            }
+var assets = await FindMoreAssets(content);
+assets = assets.Where(x => !File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x}")).ToList();
+if (assets.Count > 0)
+{
+    Console.WriteLine($"[ClientPatcher] Found {assets.Count} assets to fetch");
+    var throttler = new SemaphoreSlim(256); //(System.Environment.ProcessorCount * 8);
+    var assettasks = assets.Where(x => !x.EndsWith("js") && !x.EndsWith("css"))
+        .Select(x => Task.Factory.StartNew(() => AssetCache.StreamToDiskAsync($"{Configuration.Instance.AssetCacheLocationResolved}/{x}", "https://discord.com/assets/" + x))).ToList();
+    var tasks = assets.Where(x => x.EndsWith("js") || x.EndsWith("css")).Select(x => Task.Factory.StartNew(async () =>
+    {
+        {
+            await throttler.WaitAsync();
+            await AssetCache.GetFromNetwork(x.Replace("/assets/", ""));
+            throttler.Release();
+        }
+    })).ToList();
+    //await Task.WhenAll(tasks);
+    await Task.WhenAll(assettasks);
+}
         }*/
 
         return content;

@@ -20,8 +20,8 @@ public class Configuration
     //This must be delayed until after working dir is set!
     public static void Load()
     {
-        Instance = (File.Exists(RuntimeEnvironment.BaseDir + "/config.json")
-            ? JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(RuntimeEnvironment.BaseDir + "/config.json"))
+        Instance = (File.Exists("config.json")
+            ? JsonConvert.DeserializeObject<Configuration>(File.ReadAllText("config.json"))
             : new Configuration()) ?? new Configuration();
         Instance.Save();
     }
