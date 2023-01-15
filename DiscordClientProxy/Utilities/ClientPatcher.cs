@@ -18,7 +18,9 @@ public class ClientPatcher
         new GatewayImmediateReconnectPatch(), // Remove reconnect delay in gateway
         new KeepLocalStoragePatch(), // Prevent client from clearing localStorage 
         new NoQrLoginPatch(), // Remove QR login
-        new FastIdentifyPatch(),
+        new FastIdentifyPatch(), // Fast identity - speeds up client firstload
+        new EmotesFromGhCdnPatch(), // Map emotes to GitHub files (see twitter/twemoji, assets/svg/)
+
         //branding
         new BrandingLogoPatch(),
         new BrandingPremiumPatch(),
@@ -27,7 +29,7 @@ public class ClientPatcher
 
         //extras
         new ChangelogPatch(),
-        
+
         //fun stuff
         new ForceIsStaffPatch(),
         new ExperimentsOnStablePatch(),
@@ -54,8 +56,9 @@ public class ClientPatcher
         await File.WriteAllTextAsync(path, content);
     }
 
-    public static async Task<string> Patch(string content)
+    public static async Task<string> Patch(string content, string filename = "unknown-file")
     {
+        var oldSize = content.Length;
         foreach (var patch in ClientPatches)
         {
             //make sure its definitely in there!
@@ -68,6 +71,8 @@ public class ClientPatcher
             if (Configuration.Instance.Client.DebugOptions.Patches.TryGetValue(patch.GetType().Name, out var enabled) && enabled)
                 content = await patch.ApplyPatch(content);
         }
+
+        Console.WriteLine($"[ClientPatcher] {filename}: {oldSize} -> {content.Length} ({(content.Length < oldSize ? "+" : "")}{oldSize - content.Length} bytes)");
 
         /*if (Configuration.Instance.Cache.DownloadAssetsRecursive)
         {
@@ -94,6 +99,4 @@ if (assets.Count > 0)
 
         return content;
     }
-
-    
 }

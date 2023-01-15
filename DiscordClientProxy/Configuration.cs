@@ -1,4 +1,5 @@
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace DiscordClientProxy;
 
@@ -21,14 +22,18 @@ public class Configuration
     public static void Load()
     {
         Instance = (File.Exists("config.json")
-            ? JsonConvert.DeserializeObject<Configuration>(File.ReadAllText("config.json"))
+            ? JsonSerializer.Deserialize<Configuration>(File.ReadAllText("config.json"))
             : new Configuration()) ?? new Configuration();
         Instance.Save();
     }
 
     public void Save()
     {
-        File.WriteAllText("config.json", JsonConvert.SerializeObject(Instance, Formatting.Indented));
+        File.WriteAllText("config.json", JsonSerializer.Serialize(Instance, new JsonSerializerOptions()
+        {
+            WriteIndented = true,
+            DefaultIgnoreCondition = JsonIgnoreCondition.Never
+        }));
     }
 }
 

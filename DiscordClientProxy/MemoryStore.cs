@@ -28,7 +28,7 @@ public class TieredAssetStore
         //ensure no asset prefix
         asset = asset.Replace("/assets/", "");
         
-        byte[] data;
+        byte[] data = null!;
         if (Configuration.Instance.Cache.Memory && MemoryStore.asset_cache.TryGetValue(asset, out data)) return data;
         if (Configuration.Instance.Cache.Disk && File.Exists(Configuration.Instance.AssetCacheLocationResolved + asset))
             data = await File.ReadAllBytesAsync(Configuration.Instance.AssetCacheLocationResolved + asset);
@@ -36,11 +36,25 @@ public class TieredAssetStore
         {
             using HttpClient client = new();
             Console.WriteLine($"Downloading asset: {Configuration.Instance.Cache.AssetBaseUri + asset}");
-            data = await client.GetByteArrayAsync(Configuration.Instance.Cache.AssetBaseUri + asset);
+            int attempt = 0;
+            while((data == null || data.Length == 0) && attempt < 5)
+            {
+                try
+                {
+                    attempt++;
+                    data = await client.GetByteArrayAsync(Configuration.Instance.Cache.AssetBaseUri + asset);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"[{attempt}/5] Failed to download asset: {Configuration.Instance.Cache.AssetBaseUri + asset} - {e.Message}");
+                    attempt++;
+                }
+            }
             if (asset.EndsWith(".js") || asset.EndsWith(".css"))
                 data = Encoding.UTF8.GetBytes(
                     await ClientPatcher.Patch(
-                        Encoding.UTF8.GetString(data)
+                        Encoding.UTF8.GetString(data),
+                        asset
                     )
                 );
             if(RecordNewDownloads)
@@ -64,6 +78,8 @@ public class TieredAssetStore
         if (Configuration.Instance.Cache.Memory && !MemoryStore.asset_cache.ContainsKey(asset))
             MemoryStore.asset_cache.TryAdd(asset, data);
         if (Configuration.Instance.Cache.Disk && !File.Exists(Configuration.Instance.AssetCacheLocationResolved + asset)) 
-            await File.WriteAllBytesAsync(Configuration.Instance.AssetCacheLocationResolved + asset, data);
+#pragma warning disable CS4014 -- we dont care that this isnt awaited.. its a background task after all!
+            File.WriteAllBytesAsync(Configuration.Instance.AssetCacheLocationResolved + asset, data);
+#pragma warning restore CS4014
     }
 }

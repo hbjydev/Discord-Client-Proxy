@@ -1,3 +1,4 @@
+using System.Text.Json;
 using DiscordClientProxy.Interfaces;
 using DiscordClientProxy.Utilities;
 
@@ -20,14 +21,14 @@ public class IdentifyEmotesTask : IStartupTask
         var assetDict = new Dictionary<string, string>();
         foreach (var asset in assets)
         {
-            assetDict.Add(Path.GetFileNameWithoutExtension(asset), await File.ReadAllTextAsync(asset));
+            assetDict.Add(Path.GetFileName(asset), await File.ReadAllTextAsync(asset));
             Console.Write($"Read {assetDict.Count} assets...\r");
         }
         Console.WriteLine();
         var emoteDict = new Dictionary<string, string>();
         foreach (var emote in emotes)
         {
-            emoteDict.Add(Path.GetFileNameWithoutExtension(emote), await File.ReadAllTextAsync(emote));
+            emoteDict.Add(Path.GetFileName(emote), await File.ReadAllTextAsync(emote));
             Console.Write($"Read {emoteDict.Count} emotes...\r");
         }
         Console.WriteLine();
@@ -42,6 +43,13 @@ public class IdentifyEmotesTask : IStartupTask
             }
         }
         Console.WriteLine($"Found {identical.Count} matches!");
+        await using var fs = File.OpenWrite("emotes.json");
+        await JsonSerializer.SerializeAsync(fs, identical, new JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+        await fs.FlushAsync();
+        fs.Close();
         Console.WriteLine("asdf");
         
     }

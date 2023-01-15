@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using DiscordClientProxy.Interfaces;
 
@@ -63,7 +64,6 @@ public class PrefetchClientRecursiveTask : IStartupTask
         assets.AddRange(Regex.Matches(content, @"\+""([a-zA-Z0-9]+?\.worker\.js)""").Select(x => x.Groups[1].Value));
         assets.AddRange(Regex.Matches(content, @"\+""([a-zA-Z0-9]+?\.worker\.js)""").Select(x => x.Groups[1].Value));
         var questionableMatches = new List<string>();
-        
 
         if (questionableMatches.Any())
         {
@@ -73,6 +73,12 @@ public class PrefetchClientRecursiveTask : IStartupTask
             //Thread.Sleep(10000);
         }
         assets.AddRange(questionableMatches);
+
+        if (File.Exists("emotes.json"))
+        {
+            var _emotes = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText("emotes.json"));
+            assets.RemoveAll(x => _emotes.ContainsKey(x));
+        }
 
         return assets;
     }

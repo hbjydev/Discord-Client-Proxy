@@ -57,4 +57,21 @@ public class IndexController : ControllerBase
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         });
     }
+    [HttpGet("/dbg/emojis")]
+    public async Task<object> Index()
+    {
+        var html = "<table border=1>" +
+                   "<tr>" +
+                       "<td>Discord:</td>" +
+                       "<td>Mapped:</td>" +
+                   "</tr>";
+        foreach (var (key, value) in JsonSerializer.Deserialize<Dictionary<string, string>>(System.IO.File.ReadAllText("emotes.json")))
+        {
+            html += $"<tr>" +
+                        $"<td>{key}<br><img src=\"/assets/{key}\" style=\"width: 64px;\"/></td>" +
+                        $"<td>{value}<br><img src=\"https://raw.githubusercontent.com/twitter/twemoji/master/assets/svg/{value}\" style=\"width: 64px;\"/></td>" +
+                    $"</tr>";
+        }
+        return File(Encoding.UTF8.GetBytes(html), "text/html");
+    }
 }

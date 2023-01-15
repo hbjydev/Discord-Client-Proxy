@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Text.Unicode;
 using AngleSharp.Html;
@@ -72,28 +71,6 @@ public class PrefetchClientTask : IStartupTask
         Console.WriteLine("Downloading done!!!!!");
     }
 
-    private static async Task Download(List<string> assets)
-    {
-        var assettasks = assets
-            .Select(x => Task.Factory.StartNew(() =>
-            {
-                DownloadFile(x);
-            })).ToList();
-        await Task.WhenAll(assettasks);
-        
-    }
-
-    private static async Task DownloadFile(string asset)
-    {
-        var content = Encoding.UTF8.GetString(await TieredAssetStore.GetAsset(asset));
-        var assets = await FindMoreAssets(content);
-        assets = assets.Where(x => !File.Exists($"{Configuration.Instance.AssetCacheLocationResolved}/{x}")).ToList();
-        if (assets.Count > 0)
-        {
-            Console.WriteLine($"[ClientPatcher] Found {assets.Count} assets to fetch");
-        }
-    }
-
     private static async Task<string> GetHtmlFormatted(string url)
     {
         using var client = new HttpClient();
@@ -103,18 +80,5 @@ public class PrefetchClientTask : IStartupTask
         var sw = new StringWriter();
         document.ToHtml(sw, new PrettyMarkupFormatter());
         return sw.ToString();
-    }
-
-    public static async Task<List<string>> FindMoreAssets(string content)
-    {
-        string pattern = @"\.exports=.\..\+\""(.*?\..{0,5})\""";
-        var matches = Regex.Matches(content, pattern);
-        var assets = new List<string>();
-        foreach (Match m in matches)
-        {
-            assets.Add(m.Groups[1].Value);
-        }
-
-        return assets;
     }
 }
